@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#160B0E" />
+<title>Mitra</title>
+<link rel="manifest" href="manifest.webmanifest" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --night:#1C1014; --night-2:#2A1820; --night-edge:#160B0E;
+    --ember-core:#FFD3A0; --ember:#FFB877; --ember-deep:#F0925A;
+    --rose:#E89BA8;
+    --text:#F5ECE4; --muted:#B79E95; --faint:#806560;
+    --line:rgba(255,236,222,.09); --line-warm:rgba(255,184,119,.28);
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    background:radial-gradient(135% 105% at 50% 20%, #3C2330 0%, var(--night-2) 38%, var(--night) 66%, var(--night-edge) 100%);
+    background-attachment:fixed;
+    color:var(--text);
+    font-family:"Hanken Grotesk", system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    position:fixed; inset:0; overflow:hidden; overscroll-behavior:none;
+  }
+
+  /* ---------- the living light ---------- */
+  #glow{
+    position:fixed; left:50%; top:16%; width:min(88vw,520px); aspect-ratio:1;
+    transform:translate(-50%,-50%) scale(1); border-radius:50%;
+    pointer-events:none; z-index:0;
+    background:radial-gradient(circle at 50% 50%,
+      rgba(255,190,120,.20) 0%, rgba(255,150,110,.07) 38%, transparent 68%);
+    filter:blur(14px);
+    animation:breathe 6.5s var(--ease) infinite;
+    transition:opacity 1s var(--ease);
+    will-change:transform;
+  }
+  @keyframes breathe{ 0%,100%{ transform:translate(-50%,-50%) scale(1);} 50%{ transform:translate(-50%,-50%) scale(1.07);} }
+  #glow.thinking{ animation:breathe 2.4s var(--ease) infinite; }
+
+  /* ---------- shell ---------- */
+  #app{ position:relative; z-index:2; height:100%; display:flex; flex-direction:column; max-width:640px; margin:0 auto; }
+  #app[hidden]{ display:none; }
+
+  /* ---------- auth screen ---------- */
+  #authscreen{
+    position:relative; z-index:5; height:100%; display:flex; align-items:center; justify-content:center;
+    padding:24px; padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  }
+  #authscreen[hidden]{ display:none; }
+  #authbox{
+    width:100%; max-width:380px;
+    background:rgba(255,240,228,.04); border:1px solid var(--line-warm);
+    border-radius:24px; padding:2rem 1.7rem 1.7rem;
+    box-shadow:0 24px 70px -24px rgba(0,0,0,.5);
+  }
+  #auth-sub{ text-align:center; margin-bottom:.3rem; color:var(--muted); }
+  #auth-welcome{
+    text-align:center; font-family:"Fraunces",serif; font-style:italic; font-weight:380;
+    font-size:1.08rem; color:var(--text); line-height:1.5; margin:1rem 0 1.6rem;
+  }
+  .auth-input{
+    width:100%; background:rgba(255,255,255,.045); border:1px solid var(--line); border-radius:14px;
+    color:var(--text); font-family:inherit; font-size:1rem; padding:.9rem 1.05rem; margin-bottom:.65rem;
+    transition:border-color .25s var(--ease), background .25s var(--ease);
+  }
+  .auth-input::placeholder{ color:var(--faint); }
+  .auth-input:focus{ outline:none; border-color:var(--ember); background:rgba(255,176,102,.06); }
+  .auth-error{
+    background:rgba(232,155,168,.12); border:1px solid rgba(232,155,168,.4); color:var(--rose);
+    font-size:.86rem; padding:.7rem .9rem; border-radius:12px; margin-bottom:.8rem; line-height:1.4;
+  }
+  .auth-links{ display:flex; justify-content:space-between; margin-top:1.1rem; gap:.6rem; flex-wrap:wrap; }
+  .linkbtn{ appearance:none; background:none; border:none; color:var(--muted); font-family:inherit; font-size:.84rem; cursor:pointer; padding:.2rem; transition:color .2s; }
+  .linkbtn:hover{ color:var(--ember-core); }
+
+  /* primary warm CTA button (login/signup + reusable anywhere a full-width primary action is needed) */
+  .cta{
+    appearance:none; border:none; cursor:pointer; width:100%;
+    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+    background:linear-gradient(180deg, var(--ember-core), var(--ember));
+    color:var(--night-edge); font-family:inherit; font-weight:600; font-size:1rem;
+    padding:.9rem 1.4rem; border-radius:100px; margin-top:.5rem;
+    box-shadow:0 10px 30px -12px rgba(255,176,102,.6);
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease), opacity .2s var(--ease);
+  }
+  .cta:hover{ transform:translateY(-1px); box-shadow:0 14px 36px -12px rgba(255,176,102,.75); }
+  .cta:active{ transform:translateY(0) scale(.98); }
+  .cta:disabled{ opacity:.5; cursor:default; transform:none; box-shadow:none; }
+
+  header{
+    display:flex; align-items:center; gap:.6rem;
+    padding:calc(env(safe-area-inset-top) + 14px) 20px 12px;
+    position:relative;
+  }
+  .brand{ display:flex; align-items:center; gap:.5rem; font-family:"Fraunces",serif; font-style:italic; font-weight:420; font-size:1.32rem; color:var(--text); }
+  .bdot{ width:8px; height:8px; border-radius:50%;
+    background:radial-gradient(circle at 40% 40%, var(--ember-core), var(--ember-deep));
+    box-shadow:0 0 12px 1px rgba(255,176,102,.75); animation:bdot 3.6s var(--ease) infinite; }
+  @keyframes bdot{ 0%,100%{ transform:scale(1); opacity:.92;} 50%{ transform:scale(1.28); opacity:1;} }
+  .brand-sub{ font-family:"Hanken Grotesk",sans-serif; font-style:normal; font-weight:400; font-size:.72rem; color:var(--faint); letter-spacing:.02em; margin-left:.1rem; }
+  #info{ margin-left:auto; appearance:none; background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
+    width:38px; height:38px; border-radius:50%; cursor:pointer; font-family:"Fraunces",serif; font-style:italic; font-size:1.1rem; font-weight:600; transition:color .2s, border-color .2s, background .2s; }
+  #info:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
+  #chatlist-btn{ appearance:none; background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
+    width:38px; height:38px; border-radius:50%; cursor:pointer; display:grid; place-items:center;
+    transition:color .2s, border-color .2s, background .2s; margin-right:.5rem; }
+  #chatlist-btn:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
+
+  /* ---------- thread ---------- */
+  #thread{
+    flex:1; overflow-y:auto; padding:8px 18px 8px;
+    display:flex; flex-direction:column; gap:14px;
+    scroll-behavior:smooth;
+  }
+  #thread::-webkit-scrollbar{ width:0; }
+
+  .msg{ max-width:82%; line-height:1.5; font-size:1.02rem; padding:.72rem .95rem; border-radius:18px; opacity:0; transform:translateY(8px); animation:pop .45s var(--ease) forwards; white-space:pre-wrap; word-wrap:break-word; }
+  @keyframes pop{ to{ opacity:1; transform:none; } }
+  .msg.mitra{ align-self:flex-start; background:rgba(255,240,228,.055); border:1px solid var(--line); border-bottom-left-radius:6px; color:var(--text); }
+  .msg.user{ align-self:flex-end; background:linear-gradient(180deg, rgba(255,176,102,.18), rgba(255,176,102,.09)); border:1px solid var(--line-warm); border-bottom-right-radius:6px; color:var(--text); }
+
+  /* typing dots */
+  .typing{ align-self:flex-start; display:flex; gap:5px; padding:.9rem 1rem; background:rgba(255,240,228,.055); border:1px solid var(--line); border-radius:18px; border-bottom-left-radius:6px; }
+  .typing i{ width:7px; height:7px; border-radius:50%; background:var(--ember); opacity:.5; animation:blink 1.3s var(--ease) infinite; }
+  .typing i:nth-child(2){ animation-delay:.18s; } .typing i:nth-child(3){ animation-delay:.36s; }
+  @keyframes blink{ 0%,100%{ opacity:.35; transform:translateY(0);} 50%{ opacity:1; transform:translateY(-3px);} }
+
+  /* crisis / support card */
+  .support{ align-self:stretch; margin:2px 0; padding:1rem 1.1rem; border-radius:16px; border:1px solid var(--line-warm);
+    background:linear-gradient(180deg, rgba(255,176,102,.10), rgba(255,176,102,.04)); color:var(--text); font-size:.94rem; line-height:1.55; }
+  .support b{ color:var(--ember-core); font-weight:600; }
+  .support .tele{ display:inline-block; margin-top:.5rem; font-family:"Fraunces",serif; font-style:italic; font-size:1.15rem; color:var(--ember-core); }
+
+  /* ---------- composer ---------- */
+  #composer{
+    padding:10px 16px calc(env(safe-area-inset-bottom) + 14px);
+    display:flex; gap:10px; align-items:flex-end;
+  }
+  #box{
+    flex:1; resize:none; max-height:130px;
+    background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:22px;
+    color:var(--text); font-family:inherit; font-size:1.02rem; line-height:1.4;
+    padding:.8rem 1.05rem; transition:border-color .25s var(--ease), background .25s var(--ease);
+  }
+  #box::placeholder{ color:var(--faint); }
+  #box:focus{ outline:none; border-color:var(--ember); background:rgba(255,176,102,.05); }
+  #send{
+    flex:0 0 auto; width:46px; height:46px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(180deg, var(--ember-core), var(--ember)); color:var(--night-edge);
+    display:grid; place-items:center; box-shadow:0 8px 26px -10px rgba(255,176,102,.7);
+    transition:transform .2s var(--ease), opacity .2s var(--ease);
+  }
+  #send:active{ transform:scale(.92); }
+
+  #mic{
+    flex:0 0 auto; width:46px; height:46px; border-radius:50%; cursor:pointer;
+    background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
+    display:grid; place-items:center;
+    transition:border-color .2s var(--ease), color .2s var(--ease), background .2s var(--ease), transform .2s var(--ease);
+  }
+  #mic:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
+  #mic:active{ transform:scale(.92); }
+  #mic[hidden]{ display:none; }
+  #mic.recording{
+    border-color:var(--ember); color:var(--ember-core);
+    background:linear-gradient(180deg, rgba(255,176,102,.20), rgba(255,176,102,.08));
+    animation:micpulse 1.4s var(--ease) infinite;
+  }
+  @keyframes micpulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(255,176,102,.45); }
+    50%{ box-shadow:0 0 0 9px rgba(255,176,102,0); }
+  }
+  #send:disabled{ opacity:.4; box-shadow:none; cursor:default; }
+
+  /* ---------- privacy sheet ---------- */
+  #sheet-bg{ position:fixed; inset:0; z-index:20; background:rgba(10,6,8,.6); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
+  #chatsheet-bg{ position:fixed; inset:0; z-index:20; background:rgba(10,6,8,.6); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
+  #chatsheet-bg.open{ opacity:1; pointer-events:auto; }
+  #chatsheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:21; max-width:640px; margin:0 auto;
+    background:var(--night-2); border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
+    padding:20px 20px calc(env(safe-area-inset-bottom) + 20px);
+    max-height:72vh; display:flex; flex-direction:column;
+    transform:translateY(110%); transition:transform .35s var(--ease);
+  }
+  #chatsheet.open{ transform:none; }
+  .chatlist-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.9rem; flex:0 0 auto; }
+  .chatlist-head h3{ font-family:"Fraunces",serif; font-style:italic; font-weight:400; font-size:1.25rem; color:var(--text); }
+  #newchat-btn{
+    appearance:none; border:1px solid var(--line-warm); background:linear-gradient(180deg, rgba(255,176,102,.16), rgba(255,176,102,.06));
+    color:var(--ember-core); font-family:inherit; font-weight:600; font-size:.86rem; padding:.5rem .9rem; border-radius:100px; cursor:pointer;
+  }
+  #chatlist{ overflow-y:auto; flex:1 1 auto; display:flex; flex-direction:column; gap:.4rem; margin-bottom:.6rem; }
+  .chatrow{ display:flex; align-items:center; gap:.6rem; padding:.7rem .8rem; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.02); cursor:default; }
+  .chatrow.active{ border-color:var(--line-warm); background:rgba(255,176,102,.07); }
+  .chatrow-main{ flex:1 1 auto; min-width:0; cursor:pointer; }
+  .chatrow-title{ color:var(--text); font-size:.94rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chatrow-date{ color:var(--faint); font-size:.76rem; margin-top:.15rem; }
+  .chatrow-del{ appearance:none; background:none; border:none; color:var(--faint); cursor:pointer; padding:.35rem; border-radius:8px; flex:0 0 auto; transition:color .2s; }
+  .chatrow-del:hover{ color:var(--rose); }
+
+  /* ---------- feedback sheet ---------- */
+  #feedbacksheet-bg{ position:fixed; inset:0; z-index:22; background:rgba(10,6,8,.6); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
+  #feedbacksheet-bg.open{ opacity:1; pointer-events:auto; }
+  #feedbacksheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:23; max-width:640px; margin:0 auto;
+    background:var(--night-2); border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
+    padding:22px 22px calc(env(safe-area-inset-bottom) + 24px);
+    transform:translateY(110%); transition:transform .35s var(--ease);
+  }
+  #feedbacksheet.open{ transform:none; }
+  #feedbacksheet h3{ font-family:"Fraunces",serif; font-style:italic; font-weight:400; font-size:1.25rem; color:var(--text); margin-bottom:.4rem; }
+  .fb-sub{ color:var(--muted); font-size:.88rem; line-height:1.5; margin-bottom:.9rem; }
+  .fb-textarea{ resize:none; margin-bottom:.7rem; }
+  #feedback-status{ font-size:.86rem; color:var(--ember-core); margin-bottom:.7rem; }
+
+  #sheet-bg.open{ opacity:1; pointer-events:auto; }
+  #sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:21; max-width:640px; margin:0 auto;
+    background:var(--night-2); border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
+    padding:22px 22px calc(env(safe-area-inset-bottom) + 24px);
+    transform:translateY(110%); transition:transform .35s var(--ease);
+  }
+  #sheet.open{ transform:none; }
+  #sheet h3{ font-family:"Fraunces",serif; font-style:italic; font-weight:400; font-size:1.4rem; margin-bottom:.7rem; color:var(--text); }
+  #sheet p{ color:var(--muted); font-size:.92rem; line-height:1.6; margin-bottom:.7rem; }
+  #sheet p b{ color:var(--text); font-weight:600; }
+  #sheet .close{ margin-top:.6rem; appearance:none; border:1px solid var(--line); background:none; color:var(--muted); font-family:inherit; font-size:.95rem; padding:.7rem 1.3rem; border-radius:100px; cursor:pointer; }
+
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; } }
+</style>
+</head>
+<body>
+  <div id="glow" aria-hidden="true"></div>
+
+  <!-- auth screen: shown until signed in -->
+  <div id="authscreen">
+    <div id="authbox">
+      <div class="brand" style="justify-content:center; margin-bottom:.3rem;"><span class="bdot"></span>Mitra</div>
+      <p id="auth-sub">your late-night friend</p>
+      <p id="auth-welcome">Sign in, and I'll remember you next time — your chats will be right where you left them.</p>
+
+      <div id="auth-error" class="auth-error" hidden></div>
+
+      <input id="auth-email" class="auth-input" type="email" autocomplete="email" placeholder="email" />
+      <input id="auth-password" class="auth-input" type="password" autocomplete="current-password" placeholder="password" />
+
+      <button id="auth-submit" class="cta">log in</button>
+
+      <div class="auth-links">
+        <button id="auth-toggle" class="linkbtn">new here? sign up</button>
+        <button id="auth-forgot" class="linkbtn">forgot password?</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app" hidden>
+    <header>
+      <button id="chatlist-btn" aria-label="Your chats">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      </button>
+      <span class="brand"><span class="bdot"></span>Mitra</span>
+      <span class="brand-sub">your late-night friend</span>
+      <button id="info" aria-label="How this works">i</button>
+    </header>
+
+    <div id="thread" aria-live="polite"></div>
+
+    <div id="composer">
+      <textarea id="box" rows="1" placeholder="type whatever's on your mind..." maxlength="1500"></textarea>
+      <button id="mic" aria-label="Speak instead of typing" hidden>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+      <button id="send" aria-label="Send">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- privacy sheet -->
+  <div id="sheet-bg"></div>
+  <div id="sheet">
+    <h3>just so you know 🌙</h3>
+    <p><b>Our chats live only on your phone.</b> I don't save them to any server, and no one reads them. Clear this tab and they're gone.</p>
+    <p>To reply, your messages are sent to an AI over a secure connection — used only to write back to you, never stored, never read by a person.</p>
+    <p>No login. No name. I only count anonymous things — like whether people come back — to know if I'm actually helping.</p>
+    <p style="color:var(--faint); font-size:.82rem;">I'm a friend to talk to, not a therapist or doctor. If things feel heavy, talking to someone you trust — or Tele-MANAS (14416, free, 24×7) — can really help.</p>
+    <button class="close" id="sheet-close">okay</button>
+    <button class="linkbtn" id="feedback-open" style="display:block; margin:.9rem auto 0;">suggest something / tell us what's off</button>
+    <button class="linkbtn" id="logout-btn" style="display:block; margin:.5rem auto 0;">log out</button>
+  </div>
+
+  <!-- chats sheet -->
+  <div id="chatsheet-bg"></div>
+  <div id="chatsheet">
+    <div class="chatlist-head">
+      <h3>your chats</h3>
+      <button id="newchat-btn">+ new chat</button>
+    </div>
+    <div id="chatlist"></div>
+    <button class="close" id="chatsheet-close">close</button>
+  </div>
+
+  <!-- feedback sheet -->
+  <div id="feedbacksheet-bg"></div>
+  <div id="feedbacksheet">
+    <h3>tell us something 💛</h3>
+    <p class="fb-sub">Something feel off? Got an idea? I actually read these — no essay needed.</p>
+    <textarea id="feedback-text" class="auth-input fb-textarea" rows="4" maxlength="2000" placeholder="type your thought here..."></textarea>
+    <div id="feedback-status" hidden></div>
+    <button class="cta" id="feedback-send">send it</button>
+    <button class="close" id="feedbacksheet-close">close</button>
+  </div>
+
+<!-- ===== Firebase (anonymous metrics only — no message content) ===== -->
+<script type="module">
+  // Paste the SAME firebaseConfig you used in the survey.
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+  import { getFirestore, collection, addDoc, doc, setDoc, getDocs, deleteDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+  import {
+    getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, sendPasswordResetEmail
+  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBxO9Be3Gln4k6RMnFNMM8JCLwBKa_v9ZQ",
+    authDomain: "mitra-chat-fdc4a.firebaseapp.com",
+    projectId: "mitra-chat-fdc4a",
+    storageBucket: "mitra-chat-fdc4a.firebasestorage.app",
+    messagingSenderId: "1095624201719",
+    appId: "1:1095624201719:web:f6bbec13ca14fdf4194af2"
+  };
+
+  window.__mitraEvent = function(){};  // default no-op until Firebase is configured
+  if (!String(firebaseConfig.apiKey).includes("PASTE")) {
+    try {
+      const app = initializeApp(firebaseConfig);
+      const db  = getFirestore(app);
+      const auth = getAuth(app);   // web SDK persists the session across browser restarts by default
+
+      // ---- anonymous behavioral metrics (unchanged) ----
+      window.__mitraEvent = async function(payload){
+        try { await addDoc(collection(db, "mitra_events"), Object.assign({}, payload, { _ts: serverTimestamp() })); }
+        catch(e){ /* metrics must never break the chat */ }
+      };
+
+      // ---- friendly error messages for Firebase Auth error codes ----
+      function friendly(err){
+        const c = (err && err.code) || "";
+        const map = {
+          "auth/email-already-in-use": "That email's already registered — try logging in instead.",
+          "auth/invalid-email": "That doesn't look like a valid email.",
+          "auth/weak-password": "Password should be at least 6 characters.",
+          "auth/user-not-found": "No account found with that email.",
+          "auth/wrong-password": "That password doesn't match.",
+          "auth/invalid-credential": "Email or password is incorrect.",
+          "auth/too-many-requests": "Too many attempts — try again in a bit.",
+        };
+        return map[c] || "Something went wrong. Try again?";
+      }
+
+      // ---- auth bridge ----
+      window.__mitraOnAuthChange = function(cb){ onAuthStateChanged(auth, (user) => cb(user ? { uid: user.uid, email: user.email } : null)); };
+      window.__mitraSignUp = async function(email, password){
+        try { const cred = await createUserWithEmailAndPassword(auth, email, password); return { ok:true, uid: cred.user.uid }; }
+        catch(e){ return { ok:false, error: friendly(e) }; }
+      };
+      window.__mitraLogIn = async function(email, password){
+        try { const cred = await signInWithEmailAndPassword(auth, email, password); return { ok:true, uid: cred.user.uid }; }
+        catch(e){ return { ok:false, error: friendly(e) }; }
+      };
+      window.__mitraLogOut = async function(){ try { await signOut(auth); return { ok:true }; } catch(e){ return { ok:false, error: friendly(e) }; } };
+      window.__mitraResetPassword = async function(email){
+        try { await sendPasswordResetEmail(auth, email); return { ok:true }; }
+        catch(e){ return { ok:false, error: friendly(e) }; }
+      };
+
+      // ---- per-user chat storage: users/{uid}/chats/{chatId} ----
+      window.__mitraLoadChats = async function(uid){
+        try {
+          const snap = await getDocs(collection(db, "users", uid, "chats"));
+          const out = {};
+          snap.forEach((d) => { out[d.id] = d.data(); });
+          return out;
+        } catch(e){ console.error("Mitra: loadChats failed", e); return {}; }
+      };
+      window.__mitraSaveChat = async function(uid, chatId, chatData){
+        try { await setDoc(doc(db, "users", uid, "chats", chatId), chatData); return true; }
+        catch(e){ console.error("Mitra: saveChat failed", e); return false; }
+      };
+      window.__mitraDeleteChat = async function(uid, chatId){
+        try { await deleteDoc(doc(db, "users", uid, "chats", chatId)); return true; }
+        catch(e){ console.error("Mitra: deleteChat failed", e); return false; }
+      };
+
+      // ---- feedback / suggestions (write-only; you read it via the Firebase console) ----
+      window.__mitraSendFeedback = async function(uid, text){
+        try {
+          await addDoc(collection(db, "feedback"), { uid: uid || null, text, createdAt: serverTimestamp() });
+          return { ok:true };
+        } catch(e){ console.error("Mitra: sendFeedback failed", e); return { ok:false }; }
+      };
+    } catch(e){ console.error("Mitra: Firebase init failed", e); }
+  }
+</script>
+
+<script>
+(function(){
+  "use strict";
+
+  // ====================== config ======================
+  // Point this at your backend. Local: http://localhost:8000
+  // After you deploy the backend (Render/Railway), put that https URL here.
+  const API_BASE = "http://localhost:8000";
+
+  const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ====================== elements ======================
+  const thread = document.getElementById("thread");
+  const box    = document.getElementById("box");
+  const mic    = document.getElementById("mic");
+  const send   = document.getElementById("send");
+  const glow   = document.getElementById("glow");
+
+  // ====================== state (per-account, Firestore-backed) ======================
+  let currentUid = null;
+  let chats = {};
+  let activeId = null;
+  let messages = [];    // live reference into the active chat's messages array
+  let busy = false;
+  let sessionMsgs = 0;
+
+  function makeId(){ return "c_" + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+  function makeChat(seedMessages){
+    const now = new Date().toISOString();
+    const c = { id: makeId(), createdAt: now, updatedAt: now, title: "", messages: seedMessages || [] };
+    chats[c.id] = c;
+    return c;
+  }
+  function titleFor(c){
+    if (c.title) return c.title;
+    const u = c.messages.find(m => m.role === "user" && (m.content||"").trim());
+    return u ? u.content.trim().slice(0, 42) : "New chat";
+  }
+  function relDate(iso){
+    const d = new Date(iso), now = new Date();
+    if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    const y = new Date(now); y.setDate(now.getDate()-1);
+    if (d.toDateString() === y.toDateString()) return "Yesterday";
+    return d.toLocaleDateString([], {day:"numeric", month:"short"});
+  }
+  function mostRecentId(){
+    const ids = Object.keys(chats);
+    if (!ids.length) return null;
+    ids.sort((a,b) => new Date(chats[b].updatedAt) - new Date(chats[a].updatedAt));
+    return ids[0];
+  }
+
+  async function persistActive(){
+    if (!currentUid || !activeId || !chats[activeId]) return;
+    const c = chats[activeId];
+    c.messages = messages;
+    c.updatedAt = new Date().toISOString();
+    if (!c.title) c.title = titleFor(c);
+    if (window.__mitraSaveChat) await window.__mitraSaveChat(currentUid, activeId, c);
+  }
+  function save(){ persistActive(); }   // fire-and-forget; the UI never waits on the network write
+
+  // stable per-visit session id (for depth) — deviceId/isReturn stay local & anonymous;
+  // uid (once signed in) rides along too, giving proper account-level retention.
+  function id(){ return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+  let deviceId = localStorage.getItem("mitra_device");
+  const isReturn = !!deviceId;
+  if (!deviceId){ deviceId = id(); localStorage.setItem("mitra_device", deviceId); }
+  const sessionId = id();
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  function ev(type, extra){ if (window.__mitraEvent) window.__mitraEvent(Object.assign({ type, deviceId, sessionId, isReturn, tz, uid: currentUid }, extra||{})); }
+
+  // ====================== render ======================
+  function render(){
+    thread.innerHTML = "";
+    for (const m of messages) bubble(m.role, m.content);
+    scroll();
+  }
+  function bubble(role, text){
+    const el = document.createElement("div");
+    el.className = "msg " + (role === "user" ? "user" : "mitra");
+    el.textContent = text;
+    thread.appendChild(el);
+    return el;
+  }
+  function scroll(){ requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; }); }
+
+  // ====================== greeting (Mitra speaks first, time-aware) ======================
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function greetingLine(){
+    const h = new Date().getHours();
+    if (h >= 0 && h < 5) return pick([
+      "Hey. It's pretty late na... couldn't sleep? I'm here. Kya chal raha hai mann mein?",
+      "It's that quiet 3am kind of hour. I'm awake too, in a way. What's keeping you up?",
+      "Raat ho gayi hai aur tum abhi bhi yahan ho. I'm glad you're here. Sab theek hai?",
+      "Still up? Same. I'm around if you want to talk about whatever's on your mind.",
+    ]);
+    if (h >= 5 && h < 12) return pick([
+      "Morning 🌅 how are you actually feeling as you start the day — sach mein?",
+      "Hey, good morning. Before the day gets busy — how are you, really?",
+      "Naya din hai. Kaisa lag raha hai abhi, seedha seedha bata?",
+      "Morning! Sometimes the day starts heavy even when nothing's wrong yet. You good?",
+    ]);
+    if (h >= 12 && h < 17) return pick([
+      "Hey. Hope the day's not being too heavy. What's on your mind right now?",
+      "Bhaari din ja raha hai kya? I'm here if you need a minute.",
+      "Hey, taking a break? What's going on with you today?",
+      "Middle of the day check-in — kaisa chal raha hai sab?",
+    ]);
+    if (h >= 17 && h < 22) return pick([
+      "Evening. That quiet hour when things settle down. How was your day, really?",
+      "Shaam ho gayi. Din kaisa raha, sach mein batao?",
+      "Hey, evening. Things usually get quieter around now. What's on your mind?",
+      "Evening's here. How are you holding up today?",
+    ]);
+    return pick([
+      "Hey, you're up late too. I'm around if you feel like talking. Kya haal hai?",
+      "Raat ho chali hai. I'm here if you want company for a bit.",
+      "Late night thoughts hitting? I'm around, talk to me.",
+      "Hey. Everyone else's probably asleep, but I'm not. What's up?",
+    ]);
+  }
+  function returnLine(){
+    return pick([
+      "Hey, you're back 🌙 I was thinking about our last chat. How have you been since?",
+      "You're back. I missed this — kaisa chal raha hai ab sab?",
+      "Hey, good to see you again. What's new since we last talked?",
+      "Welcome back 🌙 kya haal hai, sab kuch theek?",
+    ]);
+  }
+
+  // ====================== chat switching (new / switch / delete) ======================
+  function switchChat(newId){
+    if (!chats[newId] || newId === activeId){ closeChats(); return; }
+    activeId = newId;
+    messages = chats[activeId].messages;
+    supportShown = false;   // re-arm the safety card in the new conversation's context
+    render();
+    closeChats();
+  }
+  function newChat(){
+    const c = makeChat([{ role:"mitra", content: greetingLine() }]);
+    activeId = c.id;
+    messages = chats[activeId].messages;   // must happen BEFORE persistActive(), which reads `messages`
+    persistActive();
+    supportShown = false;
+    render();
+    closeChats();
+    ev("new_chat");
+  }
+  async function deleteChat(delId){
+    const wasActive = delId === activeId;
+    delete chats[delId];
+    if (window.__mitraDeleteChat && currentUid) await window.__mitraDeleteChat(currentUid, delId);
+    if (wasActive){
+      const nextId = mostRecentId();
+      if (nextId){
+        activeId = nextId;
+        messages = chats[activeId].messages;
+        render();
+      } else {
+        newChat();
+        return;
+      }
+    }
+    renderChatList();
+  }
+  function renderChatList(){
+    const wrap = document.getElementById("chatlist");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    const ids = Object.keys(chats).sort((a,b) => new Date(chats[b].updatedAt) - new Date(chats[a].updatedAt));
+    ids.forEach((cid) => {
+      const c = chats[cid];
+      const row = document.createElement("div");
+      row.className = "chatrow" + (cid === activeId ? " active" : "");
+      const main = document.createElement("div");
+      main.className = "chatrow-main";
+      const t = document.createElement("div"); t.className = "chatrow-title"; t.textContent = titleFor(c);
+      const d = document.createElement("div"); d.className = "chatrow-date"; d.textContent = relDate(c.updatedAt);
+      main.appendChild(t); main.appendChild(d);
+      main.addEventListener("click", () => switchChat(cid));
+      const del = document.createElement("button");
+      del.className = "chatrow-del"; del.setAttribute("aria-label","Delete chat");
+      del.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>';
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (confirm("Delete this chat? This can't be undone.")) deleteChat(cid);
+      });
+      row.appendChild(main); row.appendChild(del);
+      wrap.appendChild(row);
+    });
+  }
+
+  function boot(){
+    render();
+    const everBefore = !!localStorage.getItem("mitra_last");
+    if (!everBefore){
+      ev("first_open");
+      localStorage.setItem("mitra_last", String(Date.now()));
+      return;
+    }
+    const lastTs = Number(localStorage.getItem("mitra_last") || 0);
+    const gapHrs = (Date.now() - lastTs) / 36e5;
+    if (gapHrs > 3){
+      localStorage.setItem("mitra_last", String(Date.now())); // mark now, so a refresh 5 sec later doesn't re-fire
+      const r = returnLine();
+      setTimeout(() => {
+        messages.push({ role:"mitra", content: r });
+        save(); bubble("mitra", r); scroll();
+      }, 500);
+    }
+    ev("return_open");
+  }
+
+  // ====================== crisis safety backstop ======================
+  // Crude, intentionally broad. This is a *backstop* — the model is also told how
+  // to respond with care. It surfaces a warm support card; it never lists methods.
+  const CRISIS = [
+    "kill myself","want to die","end my life","end it all","don't want to live","dont want to live",
+    "no reason to live","better off dead","suicide","suicidal","self harm","self-harm","hurt myself",
+    "harm myself","cut myself","cutting myself","can't go on","cant go on","give up on life",
+    "marna hai","mar jau","mar jaunga","mar jaungi","jeena nahi","jeene ka mann nahi","khatam kar",
+    "zindagi khatam","apne aap ko"
+  ];
+  let supportShown = false;
+  function maybeSupport(text){
+    const t = text.toLowerCase();
+    if (supportShown) return;
+    if (CRISIS.some(k => t.includes(k))){
+      supportShown = true;
+      const card = document.createElement("div");
+      card.className = "support";
+      card.innerHTML = "It sounds like you're carrying something really heavy right now — and I'm really glad you said it out loud. You're not alone in this, and I'm right here with you. "
+        + "If it would help to talk to someone who's trained for exactly this, <b>Tele-MANAS</b> is free, 24×7, and there's no judgement:"
+        + "<span class='tele'>dial 14416</span>";
+      thread.appendChild(card); scroll();
+      ev("support_shown");
+    }
+  }
+
+  // ====================== send ======================
+  async function sendMessage(){
+    const text = box.value.trim();
+    if (!text || busy) return;
+
+    messages.push({ role:"user", content:text });
+    bubble("user", text);
+    box.value = ""; autosize();
+    save(); scroll();
+    sessionMsgs++;
+    localStorage.setItem("mitra_last", String(Date.now()));
+    ev("msg", { n: sessionMsgs });
+    maybeSupport(text);
+
+    busy = true; send.disabled = true;
+    glow.classList.add("thinking");
+
+    // typing indicator
+    const typing = document.createElement("div");
+    typing.className = "typing"; typing.innerHTML = "<i></i><i></i><i></i>";
+    thread.appendChild(typing); scroll();
+
+    let mitraEl = null, acc = "";
+    try {
+      const resp = await fetch(API_BASE + "/chat", {
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ messages })
+      });
+      if (!resp.ok || !resp.body) throw new Error("bad response");
+
+      const reader = resp.body.getReader();
+      const dec = new TextDecoder();
+      while (true){
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = dec.decode(value, { stream:true });
+        if (!chunk) continue;
+        if (!mitraEl){ typing.remove(); mitraEl = bubble("mitra", ""); }
+        acc += chunk;
+        mitraEl.textContent = acc;
+        scroll();
+      }
+    } catch(e){
+      typing.remove();
+      if (!mitraEl) mitraEl = bubble("mitra", "");
+      acc = acc || "I'm having a little trouble reaching my words right now — but I'm still here. Try me again in a sec?";
+      mitraEl.textContent = acc;
+    } finally {
+      if (typing.parentNode) typing.remove();
+      if (acc){ messages.push({ role:"mitra", content:acc }); save(); }
+      busy = false; send.disabled = false;
+      glow.classList.remove("thinking");
+      localStorage.setItem("mitra_last", String(Date.now()));
+      scroll();
+    }
+  }
+
+  // ====================== composer behavior ======================
+  function autosize(){ box.style.height = "auto"; box.style.height = Math.min(box.scrollHeight, 130) + "px"; }
+  box.addEventListener("input", autosize);
+  box.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+  });
+  send.addEventListener("click", sendMessage);
+
+  // ====================== voice input (speak -> fills box, never auto-sends) ======================
+  // Deliberately INPUT-ONLY: no text-to-speech. Transcribed speech lands in the
+  // textbox for the student to review/edit, then goes through the SAME
+  // sendMessage() path (and therefore the same crisis-detection backstop) as
+  // anything typed. This must never create a second, safety-bypassing send path.
+  (function initVoice(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR){ mic.hidden = true; return; }   // graceful degrade (e.g. Safari/iOS)
+    mic.hidden = false;
+
+    let recognizing = false;
+    let voiceComposed = false;   // true if current draft in the box came from voice
+    const recog = new SR();
+    recog.lang = "en-IN";
+    recog.continuous = false;
+    recog.interimResults = false;
+
+    function setRecording(on){
+      recognizing = on;
+      mic.classList.toggle("recording", on);
+    }
+
+    mic.addEventListener("click", () => {
+      if (recognizing){ recog.stop(); return; }
+      try { recog.start(); setRecording(true); }
+      catch(e){ setRecording(false); }
+    });
+
+    recog.addEventListener("result", (e) => {
+      const transcript = Array.from(e.results).map(r => r[0].transcript).join(" ").trim();
+      if (!transcript) return;
+      const sep = box.value.trim() ? " " : "";
+      box.value = (box.value.trim() + sep + transcript).trim();
+      voiceComposed = true;
+      autosize();
+      box.focus();
+    });
+
+    recog.addEventListener("end", () => setRecording(false));
+    recog.addEventListener("error", () => setRecording(false));
+
+    // reset the voice flag once the user edits the box by hand after a transcription
+    box.addEventListener("keydown", (e) => {
+      if (voiceComposed && e.key !== "Enter") voiceComposed = false;
+    });
+
+    // Metric bookkeeping only — does NOT call sendMessage itself and does NOT
+    // replace the existing send handlers. It runs alongside them (both listeners
+    // fire on the same click/keydown), so the real send path is untouched and
+    // there's no second path that could bypass the crisis-detection backstop.
+    function trackIfVoice(){
+      if (!voiceComposed) return;
+      const uses = parseInt(localStorage.getItem("mitra_voice_uses") || "0", 10) + 1;
+      localStorage.setItem("mitra_voice_uses", String(uses));
+      ev("voice_used", { uses, firstUse: uses === 1 });
+      voiceComposed = false;
+    }
+    send.addEventListener("click", trackIfVoice);
+    box.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) trackIfVoice();
+    });
+  })();
+
+  // ====================== privacy sheet ======================
+  const sheet = document.getElementById("sheet"), sheetBg = document.getElementById("sheet-bg");
+  function openSheet(o){ sheet.classList.toggle("open", o); sheetBg.classList.toggle("open", o); }
+  document.getElementById("info").addEventListener("click", () => openSheet(true));
+  document.getElementById("sheet-close").addEventListener("click", () => openSheet(false));
+  sheetBg.addEventListener("click", () => openSheet(false));
+
+  // ====================== chats sheet ======================
+  const chatsheet = document.getElementById("chatsheet"), chatsheetBg = document.getElementById("chatsheet-bg");
+  function openChats(o){
+    chatsheet.classList.toggle("open", o); chatsheetBg.classList.toggle("open", o);
+    if (o) renderChatList();
+  }
+  function closeChats(){ openChats(false); }
+  document.getElementById("chatlist-btn").addEventListener("click", () => openChats(true));
+  document.getElementById("chatsheet-close").addEventListener("click", () => openChats(false));
+  chatsheetBg.addEventListener("click", () => openChats(false));
+  document.getElementById("newchat-btn").addEventListener("click", newChat);
+
+  // ====================== auth screen wiring ======================
+  const authscreen  = document.getElementById("authscreen");
+  const appEl       = document.getElementById("app");
+  const authEmail   = document.getElementById("auth-email");
+  const authPassword= document.getElementById("auth-password");
+  const authSubmit  = document.getElementById("auth-submit");
+  const authToggle  = document.getElementById("auth-toggle");
+  const authForgot  = document.getElementById("auth-forgot");
+  const authError   = document.getElementById("auth-error");
+  let authMode = "login";
+
+  function showAuthError(msg){ authError.textContent = msg; authError.hidden = false; }
+  function clearAuthError(){ authError.hidden = true; authError.textContent = ""; }
+
+  authToggle.addEventListener("click", () => {
+    authMode = authMode === "login" ? "signup" : "login";
+    authSubmit.textContent = authMode === "login" ? "log in" : "create account";
+    authToggle.textContent = authMode === "login" ? "new here? sign up" : "already have an account? log in";
+    clearAuthError();
+  });
+
+  authSubmit.addEventListener("click", async () => {
+    clearAuthError();
+    const email = authEmail.value.trim(), password = authPassword.value;
+    if (!email || !password){ showAuthError("Enter both email and password."); return; }
+    authSubmit.disabled = true;
+    const fn = authMode === "login" ? window.__mitraLogIn : window.__mitraSignUp;
+    const res = fn ? await fn(email, password) : { ok:false, error:"Sign-in isn't configured yet." };
+    authSubmit.disabled = false;
+    if (!res.ok) showAuthError(res.error);
+    // on success, __mitraOnAuthChange fires on its own and takes it from here
+  });
+  authPassword.addEventListener("keydown", (e) => { if (e.key === "Enter") authSubmit.click(); });
+
+  authForgot.addEventListener("click", async () => {
+    clearAuthError();
+    const email = authEmail.value.trim();
+    if (!email){ showAuthError("Enter your email above first, then tap this again."); return; }
+    const res = window.__mitraResetPassword ? await window.__mitraResetPassword(email) : { ok:false, error:"Not configured yet." };
+    showAuthError(res.ok ? "Password reset email sent — check your inbox." : res.error);
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", async () => {
+    if (window.__mitraLogOut) await window.__mitraLogOut();
+    // __mitraOnAuthChange fires on its own and shows the auth screen again
+  });
+
+  // ====================== feedback sheet ======================
+  const feedbacksheet = document.getElementById("feedbacksheet"), feedbacksheetBg = document.getElementById("feedbacksheet-bg");
+  const feedbackText = document.getElementById("feedback-text");
+  const feedbackSend = document.getElementById("feedback-send");
+  const feedbackStatus = document.getElementById("feedback-status");
+
+  function openFeedback(o){
+    feedbacksheet.classList.toggle("open", o); feedbacksheetBg.classList.toggle("open", o);
+    if (o){ feedbackStatus.hidden = true; feedbackText.value = ""; feedbackText.focus(); }
+  }
+  document.getElementById("feedback-open").addEventListener("click", () => { openSheet(false); openFeedback(true); });
+  document.getElementById("feedbacksheet-close").addEventListener("click", () => openFeedback(false));
+  feedbacksheetBg.addEventListener("click", () => openFeedback(false));
+
+  feedbackSend.addEventListener("click", async () => {
+    const text = feedbackText.value.trim();
+    if (!text){ feedbackText.focus(); return; }
+    feedbackSend.disabled = true;
+    const res = window.__mitraSendFeedback ? await window.__mitraSendFeedback(currentUid, text) : { ok:false };
+    feedbackSend.disabled = false;
+    feedbackStatus.hidden = false;
+    if (res.ok){
+      feedbackStatus.textContent = "Got it — thank you 💛";
+      feedbackText.value = "";
+      setTimeout(() => openFeedback(false), 1400);
+    } else {
+      feedbackStatus.textContent = "Couldn't send that just now — try again?";
+    }
+  });
+
+  // ====================== sign-in state -> app state ======================
+  let initializedFor = null;   // guards against onAuthStateChanged re-firing mid-session
+  async function onSignedIn(user){
+    authscreen.hidden = true;
+    appEl.hidden = false;
+    if (initializedFor === user.uid) return;   // already loaded for this session — don't reset state under the user
+    initializedFor = user.uid;
+    currentUid = user.uid;
+    chats = (window.__mitraLoadChats ? await window.__mitraLoadChats(currentUid) : {}) || {};
+    activeId = mostRecentId();
+    if (!activeId){
+      const c = makeChat([{ role:"mitra", content: greetingLine() }]);
+      activeId = c.id;
+      messages = chats[activeId].messages;   // must happen BEFORE persistActive(), which reads `messages`
+      await persistActive();
+    } else {
+      messages = chats[activeId].messages;
+    }
+    boot();
+    ev("session");
+  }
+  function onSignedOut(){
+    initializedFor = null;
+    currentUid = null; chats = {}; activeId = null; messages = [];
+    appEl.hidden = true;
+    authscreen.hidden = false;
+    authEmail.value = ""; authPassword.value = ""; clearAuthError();
+  }
+
+  // ====================== go ======================
+  // Wait for the Firebase module (type="module", deferred) to have actually run
+  // before checking for its bridge functions — otherwise this classic script can
+  // execute first and wrongly conclude "Firebase isn't configured."
+  function initAuthFlow(){
+    if (window.__mitraOnAuthChange){
+      window.__mitraOnAuthChange((user) => { if (user) onSignedIn(user); else onSignedOut(); });
+    } else {
+      showAuthError("Sign-in isn't configured yet.");
+    }
+  }
+  if (document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", initAuthFlow);
+  } else {
+    initAuthFlow();
+  }
+
+  // register service worker (installable PWA) — optional, ignore if it fails
+  if ("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+})();
+</script>
+</body>
+</html>

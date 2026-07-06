@@ -1,0 +1,23 @@
+// ADD this block to your existing Firestore rules (keep the survey rules too).
+// Anonymous chat metrics: write-only, shape-checked, never any message content.
+//
+// Full file would look like:
+//   rules_version = '2';
+//   service cloud.firestore {
+//     match /databases/{database}/documents {
+//       ... your existing /responses and /waitlist blocks ...
+//       ... the block below ...
+//     }
+//   }
+
+match /mitra_events/{doc} {
+  allow read, update, delete: if false;
+  allow create: if
+       request.resource.data.keys().hasOnly(['type','deviceId','sessionId','isReturn','tz','n','_ts'])
+    && request.resource.data.type is string
+    && request.resource.data.type.size() <= 24
+    && request.resource.data.deviceId is string
+    && request.resource.data.deviceId.size() <= 40
+    && request.resource.data.sessionId is string
+    && request.resource.data.sessionId.size() <= 40;
+}

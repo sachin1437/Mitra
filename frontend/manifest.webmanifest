@@ -1,0 +1,15 @@
+{
+  "name": "Mitra",
+  "short_name": "Mitra",
+  "description": "A warm late-night friend to talk to.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#160B0E",
+  "theme_color": "#160B0E",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
