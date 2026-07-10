@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-<meta name="theme-color" content="#160B0E" />
+<meta name="theme-color" content="#120809" />
 <title>Mitra</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
@@ -17,36 +17,60 @@
 
 <style>
   :root{
-    --night:#1C1014; --night-2:#2A1820; --night-edge:#160B0E;
+    --night:#1C1014; --night-2:#2A1820; --night-edge:#120809;
     --ember-core:#FFD3A0; --ember:#FFB877; --ember-deep:#F0925A;
     --rose:#E89BA8;
     --text:#F5ECE4; --muted:#B79E95; --faint:#806560;
     --line:rgba(255,236,222,.09); --line-warm:rgba(255,184,119,.28);
+    --glass:rgba(28,16,20,.55);
     --ease:cubic-bezier(.22,.61,.36,1);
   }
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ height:100%; }
   body{
-    background:radial-gradient(135% 105% at 50% 20%, #3C2330 0%, var(--night-2) 38%, var(--night) 66%, var(--night-edge) 100%);
+    background:
+      radial-gradient(120% 90% at 50% 12%, #432634 0%, var(--night-2) 40%, var(--night) 68%, var(--night-edge) 100%);
     background-attachment:fixed;
     color:var(--text);
     font-family:"Hanken Grotesk", system-ui, sans-serif;
     -webkit-font-smoothing:antialiased;
     position:fixed; inset:0; overflow:hidden; overscroll-behavior:none;
   }
+  /* soft vignette above the particle field keeps text effortlessly readable */
+  body::after{
+    content:""; position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 100% at 50% 42%, transparent 45%, rgba(10,5,7,.55) 100%);
+  }
+
+  /* ---------- 3D ember field (canvas, behind everything) ---------- */
+  #space{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    opacity:.9;
+  }
 
   /* ---------- the living light ---------- */
   #glow{
     position:fixed; left:50%; top:16%; width:min(88vw,520px); aspect-ratio:1;
     transform:translate(-50%,-50%) scale(1); border-radius:50%;
-    pointer-events:none; z-index:0;
+    pointer-events:none; z-index:1;
     background:radial-gradient(circle at 50% 50%,
-      rgba(255,190,120,.20) 0%, rgba(255,150,110,.07) 38%, transparent 68%);
+      rgba(255,190,120,.22) 0%, rgba(255,150,110,.08) 38%, transparent 68%);
     filter:blur(14px);
     animation:breathe 6.5s var(--ease) infinite;
     transition:opacity 1s var(--ease);
     will-change:transform;
   }
+  /* slow shimmer ring gives the lamp a sense of rotation in space */
+  #glow::before{
+    content:""; position:absolute; inset:12%;
+    border-radius:50%;
+    background:conic-gradient(from 0deg,
+      transparent 0deg, rgba(255,200,140,.10) 70deg, transparent 150deg,
+      rgba(232,155,168,.07) 230deg, transparent 320deg);
+    animation:lamprot 28s linear infinite;
+    filter:blur(18px);
+  }
+  @keyframes lamprot{ to{ transform:rotate(360deg); } }
   @keyframes breathe{ 0%,100%{ transform:translate(-50%,-50%) scale(1);} 50%{ transform:translate(-50%,-50%) scale(1.07);} }
   #glow.thinking{ animation:breathe 2.4s var(--ease) infinite; }
 
@@ -58,13 +82,21 @@
   #authscreen{
     position:relative; z-index:5; height:100%; display:flex; align-items:center; justify-content:center;
     padding:24px; padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    perspective:1100px;
   }
   #authscreen[hidden]{ display:none; }
   #authbox{
     width:100%; max-width:380px;
-    background:rgba(255,240,228,.04); border:1px solid var(--line-warm);
+    background:linear-gradient(160deg, rgba(255,240,228,.07), rgba(255,240,228,.025));
+    border:1px solid var(--line-warm);
     border-radius:24px; padding:2rem 1.7rem 1.7rem;
-    box-shadow:0 24px 70px -24px rgba(0,0,0,.5);
+    box-shadow:
+      0 30px 80px -28px rgba(0,0,0,.65),
+      0 2px 0 rgba(255,220,190,.06) inset;
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    transform-style:preserve-3d;
+    transition:transform .18s var(--ease);
+    will-change:transform;
   }
   #auth-sub{ text-align:center; margin-bottom:.3rem; color:var(--muted); }
   #auth-welcome{
@@ -105,18 +137,21 @@
     padding:calc(env(safe-area-inset-top) + 14px) 20px 12px;
     position:relative;
   }
-  .brand{ display:flex; align-items:center; gap:.5rem; font-family:"Fraunces",serif; font-style:italic; font-weight:420; font-size:1.32rem; color:var(--text); }
+  .brand{ display:flex; align-items:center; gap:.5rem; font-family:"Fraunces",serif; font-style:italic; font-weight:420; font-size:1.32rem; color:var(--text);
+    text-shadow:0 0 24px rgba(255,180,120,.25); }
   .bdot{ width:8px; height:8px; border-radius:50%;
     background:radial-gradient(circle at 40% 40%, var(--ember-core), var(--ember-deep));
     box-shadow:0 0 12px 1px rgba(255,176,102,.75); animation:bdot 3.6s var(--ease) infinite; }
   @keyframes bdot{ 0%,100%{ transform:scale(1); opacity:.92;} 50%{ transform:scale(1.28); opacity:1;} }
   .brand-sub{ font-family:"Hanken Grotesk",sans-serif; font-style:normal; font-weight:400; font-size:.72rem; color:var(--faint); letter-spacing:.02em; margin-left:.1rem; }
   #info{ margin-left:auto; appearance:none; background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
-    width:38px; height:38px; border-radius:50%; cursor:pointer; font-family:"Fraunces",serif; font-style:italic; font-size:1.1rem; font-weight:600; transition:color .2s, border-color .2s, background .2s; }
+    width:38px; height:38px; border-radius:50%; cursor:pointer; font-family:"Fraunces",serif; font-style:italic; font-size:1.1rem; font-weight:600; transition:color .2s, border-color .2s, background .2s;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
   #info:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
   #chatlist-btn{ appearance:none; background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
     width:38px; height:38px; border-radius:50%; cursor:pointer; display:grid; place-items:center;
-    transition:color .2s, border-color .2s, background .2s; margin-right:.5rem; }
+    transition:color .2s, border-color .2s, background .2s; margin-right:.5rem;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
   #chatlist-btn:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
 
   /* ---------- thread ---------- */
@@ -127,20 +162,37 @@
   }
   #thread::-webkit-scrollbar{ width:0; }
 
-  .msg{ max-width:82%; line-height:1.5; font-size:1.02rem; padding:.72rem .95rem; border-radius:18px; opacity:0; transform:translateY(8px); animation:pop .45s var(--ease) forwards; white-space:pre-wrap; word-wrap:break-word; }
+  .msg{ max-width:82%; line-height:1.5; font-size:1.02rem; padding:.72rem .95rem; border-radius:18px; opacity:0; transform:translateY(10px) scale(.98); animation:pop .45s var(--ease) forwards; white-space:pre-wrap; word-wrap:break-word; }
   @keyframes pop{ to{ opacity:1; transform:none; } }
-  .msg.mitra{ align-self:flex-start; background:rgba(255,240,228,.055); border:1px solid var(--line); border-bottom-left-radius:6px; color:var(--text); }
-  .msg.user{ align-self:flex-end; background:linear-gradient(180deg, rgba(255,176,102,.18), rgba(255,176,102,.09)); border:1px solid var(--line-warm); border-bottom-right-radius:6px; color:var(--text); }
+  .msg.mitra{
+    align-self:flex-start; color:var(--text);
+    background:linear-gradient(165deg, rgba(255,240,228,.075), rgba(255,240,228,.035));
+    border:1px solid var(--line); border-bottom-left-radius:6px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    box-shadow:0 10px 30px -18px rgba(0,0,0,.7);
+  }
+  .msg.user{
+    align-self:flex-end; color:var(--text);
+    background:linear-gradient(165deg, rgba(255,176,102,.20), rgba(255,176,102,.08));
+    border:1px solid var(--line-warm); border-bottom-right-radius:6px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    box-shadow:0 12px 32px -18px rgba(255,150,90,.35);
+  }
 
   /* typing dots */
-  .typing{ align-self:flex-start; display:flex; gap:5px; padding:.9rem 1rem; background:rgba(255,240,228,.055); border:1px solid var(--line); border-radius:18px; border-bottom-left-radius:6px; }
+  .typing{ align-self:flex-start; display:flex; gap:5px; padding:.9rem 1rem;
+    background:linear-gradient(165deg, rgba(255,240,228,.075), rgba(255,240,228,.035));
+    border:1px solid var(--line); border-radius:18px; border-bottom-left-radius:6px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
   .typing i{ width:7px; height:7px; border-radius:50%; background:var(--ember); opacity:.5; animation:blink 1.3s var(--ease) infinite; }
   .typing i:nth-child(2){ animation-delay:.18s; } .typing i:nth-child(3){ animation-delay:.36s; }
   @keyframes blink{ 0%,100%{ opacity:.35; transform:translateY(0);} 50%{ opacity:1; transform:translateY(-3px);} }
 
   /* crisis / support card */
   .support{ align-self:stretch; margin:2px 0; padding:1rem 1.1rem; border-radius:16px; border:1px solid var(--line-warm);
-    background:linear-gradient(180deg, rgba(255,176,102,.10), rgba(255,176,102,.04)); color:var(--text); font-size:.94rem; line-height:1.55; }
+    background:linear-gradient(180deg, rgba(255,176,102,.12), rgba(255,176,102,.05)); color:var(--text); font-size:.94rem; line-height:1.55;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    box-shadow:0 14px 40px -20px rgba(255,150,90,.4); }
   .support b{ color:var(--ember-core); font-weight:600; }
   .support .tele{ display:inline-block; margin-top:.5rem; font-family:"Fraunces",serif; font-style:italic; font-size:1.15rem; color:var(--ember-core); }
 
@@ -151,9 +203,10 @@
   }
   #box{
     flex:1; resize:none; max-height:130px;
-    background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:22px;
+    background:rgba(255,255,255,.045); border:1px solid var(--line); border-radius:22px;
     color:var(--text); font-family:inherit; font-size:1.02rem; line-height:1.4;
     padding:.8rem 1.05rem; transition:border-color .25s var(--ease), background .25s var(--ease);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   }
   #box::placeholder{ color:var(--faint); }
   #box:focus{ outline:none; border-color:var(--ember); background:rgba(255,176,102,.05); }
@@ -170,6 +223,7 @@
     background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
     display:grid; place-items:center;
     transition:border-color .2s var(--ease), color .2s var(--ease), background .2s var(--ease), transform .2s var(--ease);
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
   }
   #mic:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
   #mic:active{ transform:scale(.92); }
@@ -186,15 +240,18 @@
   #send:disabled{ opacity:.4; box-shadow:none; cursor:default; }
 
   /* ---------- privacy sheet ---------- */
-  #sheet-bg{ position:fixed; inset:0; z-index:20; background:rgba(10,6,8,.6); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
-  #chatsheet-bg{ position:fixed; inset:0; z-index:20; background:rgba(10,6,8,.6); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
+  #sheet-bg{ position:fixed; inset:0; z-index:20; background:rgba(10,6,8,.6); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
+  #chatsheet-bg{ position:fixed; inset:0; z-index:20; background:rgba(10,6,8,.6); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
   #chatsheet-bg.open{ opacity:1; pointer-events:auto; }
   #chatsheet{
     position:fixed; left:0; right:0; bottom:0; z-index:21; max-width:640px; margin:0 auto;
-    background:var(--night-2); border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
+    background:linear-gradient(180deg, rgba(58,32,44,.92), rgba(38,21,29,.96));
+    border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
     padding:20px 20px calc(env(safe-area-inset-bottom) + 20px);
     max-height:72vh; display:flex; flex-direction:column;
     transform:translateY(110%); transition:transform .35s var(--ease);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 -20px 60px -20px rgba(0,0,0,.6);
   }
   #chatsheet.open{ transform:none; }
   .chatlist-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.9rem; flex:0 0 auto; }
@@ -213,13 +270,16 @@
   .chatrow-del:hover{ color:var(--rose); }
 
   /* ---------- feedback sheet ---------- */
-  #feedbacksheet-bg{ position:fixed; inset:0; z-index:22; background:rgba(10,6,8,.6); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
+  #feedbacksheet-bg{ position:fixed; inset:0; z-index:22; background:rgba(10,6,8,.6); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
   #feedbacksheet-bg.open{ opacity:1; pointer-events:auto; }
   #feedbacksheet{
     position:fixed; left:0; right:0; bottom:0; z-index:23; max-width:640px; margin:0 auto;
-    background:var(--night-2); border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
+    background:linear-gradient(180deg, rgba(58,32,44,.92), rgba(38,21,29,.96));
+    border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
     padding:22px 22px calc(env(safe-area-inset-bottom) + 24px);
     transform:translateY(110%); transition:transform .35s var(--ease);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 -20px 60px -20px rgba(0,0,0,.6);
   }
   #feedbacksheet.open{ transform:none; }
   #feedbacksheet h3{ font-family:"Fraunces",serif; font-style:italic; font-weight:400; font-size:1.25rem; color:var(--text); margin-bottom:.4rem; }
@@ -230,9 +290,12 @@
   #sheet-bg.open{ opacity:1; pointer-events:auto; }
   #sheet{
     position:fixed; left:0; right:0; bottom:0; z-index:21; max-width:640px; margin:0 auto;
-    background:var(--night-2); border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
+    background:linear-gradient(180deg, rgba(58,32,44,.92), rgba(38,21,29,.96));
+    border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
     padding:22px 22px calc(env(safe-area-inset-bottom) + 24px);
     transform:translateY(110%); transition:transform .35s var(--ease);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 -20px 60px -20px rgba(0,0,0,.6);
   }
   #sheet.open{ transform:none; }
   #sheet h3{ font-family:"Fraunces",serif; font-style:italic; font-weight:400; font-size:1.4rem; margin-bottom:.7rem; color:var(--text); }
@@ -240,10 +303,15 @@
   #sheet p b{ color:var(--text); font-weight:600; }
   #sheet .close{ margin-top:.6rem; appearance:none; border:1px solid var(--line); background:none; color:var(--muted); font-family:inherit; font-size:.95rem; padding:.7rem 1.3rem; border-radius:100px; cursor:pointer; }
 
-  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; } }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; }
+    #space{ display:none; }
+    #authbox{ transition:none; transform:none !important; }
+  }
 </style>
 </head>
 <body>
+  <canvas id="space" aria-hidden="true"></canvas>
   <div id="glow" aria-hidden="true"></div>
 
   <!-- auth screen: shown until signed in -->
@@ -329,6 +397,136 @@
     <button class="cta" id="feedback-send">send it</button>
     <button class="close" id="feedbacksheet-close">close</button>
   </div>
+
+<!-- ===== 3D ember field + parallax (visual layer only — no app logic here) ===== -->
+<script>
+(function(){
+  "use strict";
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) return;   // respect it fully: no particles, no tilt
+
+  const canvas = document.getElementById("space");
+  const ctx = canvas.getContext("2d");
+
+  // --- pre-rendered glow sprite (cheap: no shadowBlur in the hot loop) ---
+  function makeSprite(r, g, b){
+    const s = document.createElement("canvas");
+    s.width = s.height = 64;
+    const c = s.getContext("2d");
+    const grad = c.createRadialGradient(32,32,0, 32,32,32);
+    grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
+    grad.addColorStop(.35, `rgba(${r},${g},${b},.45)`);
+    grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    c.fillStyle = grad; c.fillRect(0,0,64,64);
+    return s;
+  }
+  const SPRITES = [
+    makeSprite(255,211,160),   // ember core
+    makeSprite(255,184,119),   // ember
+    makeSprite(240,146,90),    // ember deep
+    makeSprite(232,155,168),   // rose (rare)
+  ];
+
+  // --- 3D particle field ---
+  const DPR = Math.min(window.devicePixelRatio || 1, 1.5);   // cap DPR: budget phones
+  const FOV = 320;           // perspective strength
+  const DEPTH = 900;         // z range
+  let W = 0, H = 0, CX = 0, CY = 0;
+  let particles = [];
+
+  function resize(){
+    W = canvas.width  = Math.floor(innerWidth * DPR);
+    H = canvas.height = Math.floor(innerHeight * DPR);
+    canvas.style.width = innerWidth + "px";
+    canvas.style.height = innerHeight + "px";
+    CX = W/2; CY = H*0.42;   // vanishing point sits near the lamp
+    const count = Math.min(90, Math.floor(innerWidth * innerHeight / 14000));
+    particles = Array.from({length: count}, newParticle);
+  }
+  function newParticle(){
+    return {
+      x:(Math.random()*2-1) * W * .7,
+      y:(Math.random()*2-1) * H * .7,
+      z:Math.random() * DEPTH,
+      r:1.4 + Math.random()*2.6,
+      v:.12 + Math.random()*.4,          // drift toward viewer
+      sway:Math.random()*Math.PI*2,
+      swaySpeed:.002 + Math.random()*.004,
+      sprite:SPRITES[Math.random() < .12 ? 3 : Math.floor(Math.random()*3)],
+      tw:Math.random()*Math.PI*2,        // twinkle phase
+    };
+  }
+
+  // --- parallax input: pointer + device tilt, softly smoothed ---
+  let targetPX = 0, targetPY = 0, px = 0, py = 0;
+  addEventListener("pointermove", (e) => {
+    targetPX = (e.clientX / innerWidth  - .5) * 2;
+    targetPY = (e.clientY / innerHeight - .5) * 2;
+  }, { passive:true });
+  addEventListener("deviceorientation", (e) => {
+    if (e.gamma == null || e.beta == null) return;
+    targetPX = Math.max(-1, Math.min(1, e.gamma / 28));
+    targetPY = Math.max(-1, Math.min(1, (e.beta - 45) / 28));
+  }, { passive:true });
+
+  // --- render loop: paused whenever the tab is hidden (battery) ---
+  let running = true, raf = 0;
+  document.addEventListener("visibilitychange", () => {
+    running = !document.hidden;
+    if (running) loop();
+    else cancelAnimationFrame(raf);
+  });
+
+  function loop(){
+    if (!running) return;
+    raf = requestAnimationFrame(loop);
+    ctx.clearRect(0,0,W,H);
+
+    // ease parallax so movement feels like weight, not jitter
+    px += (targetPX - px) * .045;
+    py += (targetPY - py) * .045;
+
+    for (const p of particles){
+      p.z -= p.v;
+      p.sway += p.swaySpeed;
+      p.tw += .02;
+      if (p.z <= 1){ Object.assign(p, newParticle(), { z: DEPTH }); }
+
+      const scale = FOV / (FOV + p.z);
+      // parallax shifts deeper layers less — that differential is what sells the depth
+      const parX = px * 46 * DPR * scale;
+      const parY = py * 30 * DPR * scale;
+      const sx = CX + (p.x + Math.sin(p.sway) * 26) * scale + parX;
+      const sy = CY + (p.y + Math.cos(p.sway * .8) * 18) * scale + parY;
+      if (sx < -40 || sx > W+40 || sy < -40 || sy > H+40) continue;
+
+      const size = p.r * scale * 7 * DPR;
+      const alpha = Math.min(.85, scale * 1.1) * (.7 + .3 * Math.sin(p.tw));
+      ctx.globalAlpha = alpha * .85;
+      ctx.drawImage(p.sprite, sx - size/2, sy - size/2, size, size);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  addEventListener("resize", resize, { passive:true });
+  resize();
+  loop();
+
+  // --- gentle 3D tilt on the auth card (pointer only; small, never dizzy) ---
+  const box = document.getElementById("authbox");
+  const screen = document.getElementById("authscreen");
+  if (box && screen){
+    screen.addEventListener("pointermove", (e) => {
+      if (screen.hidden) return;
+      const rect = box.getBoundingClientRect();
+      const dx = (e.clientX - rect.left - rect.width/2) / rect.width;
+      const dy = (e.clientY - rect.top - rect.height/2) / rect.height;
+      box.style.transform = `rotateY(${dx*5}deg) rotateX(${dy*-5}deg)`;
+    }, { passive:true });
+    screen.addEventListener("pointerleave", () => { box.style.transform = ""; }, { passive:true });
+  }
+})();
+</script>
 
 <!-- ===== Firebase (anonymous metrics only — no message content) ===== -->
 <script type="module">
@@ -525,11 +723,11 @@
       "Morning 🌅 how are you actually feeling as you start the day — sach mein?",
       "Hey, good morning. Before the day gets busy — how are you, really?",
       "Naya din hai. Kaisa lag raha hai abhi, seedha seedha bata?",
-      "Morning! Sometimes the day starts heavy even when nothing's wrong yet. You good?",
+      "Morning! Fresh start to the day — kaisa feel ho raha hai?",
     ]);
     if (h >= 12 && h < 17) return pick([
-      "Hey. Hope the day's not being too heavy. What's on your mind right now?",
-      "Bhaari din ja raha hai kya? I'm here if you need a minute.",
+      "Hey. What's been going on with you today?",
+      "Kaisa chal raha hai din? I'm here if you want to talk.",
       "Hey, taking a break? What's going on with you today?",
       "Middle of the day check-in — kaisa chal raha hai sab?",
     ]);
@@ -620,20 +818,23 @@
 
   function boot(){
     render();
-    const everBefore = !!localStorage.getItem("mitra_last");
-    if (!everBefore){
+    // Use the ACCOUNT's own data (synced via Firestore) as the source of truth for
+    // "have we talked recently" — not a per-device flag. A per-device flag meant two
+    // different devices on the same account could each independently decide "it's
+    // been a while" and both fire the return greeting into the same shared chat.
+    const c = chats[activeId];
+    const hasHistory = c && c.messages && c.messages.length > 1;   // more than just the seed greeting
+    if (!hasHistory){
       ev("first_open");
-      localStorage.setItem("mitra_last", String(Date.now()));
       return;
     }
-    const lastTs = Number(localStorage.getItem("mitra_last") || 0);
+    const lastTs = c.updatedAt ? new Date(c.updatedAt).getTime() : 0;
     const gapHrs = (Date.now() - lastTs) / 36e5;
     if (gapHrs > 3){
-      localStorage.setItem("mitra_last", String(Date.now())); // mark now, so a refresh 5 sec later doesn't re-fire
       const r = returnLine();
       setTimeout(() => {
         messages.push({ role:"mitra", content: r });
-        save(); bubble("mitra", r); scroll();
+        save(); bubble("mitra", r); scroll();   // save() updates updatedAt, which now marks it "seen" for every device
       }, 500);
     }
     ev("return_open");
@@ -675,7 +876,6 @@
     box.value = ""; autosize();
     save(); scroll();
     sessionMsgs++;
-    localStorage.setItem("mitra_last", String(Date.now()));
     ev("msg", { n: sessionMsgs });
     maybeSupport(text);
 
@@ -717,7 +917,6 @@
       if (acc){ messages.push({ role:"mitra", content:acc }); save(); }
       busy = false; send.disabled = false;
       glow.classList.remove("thinking");
-      localStorage.setItem("mitra_last", String(Date.now()));
       scroll();
     }
   }
