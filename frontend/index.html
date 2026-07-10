@@ -36,19 +36,21 @@
     -webkit-font-smoothing:antialiased;
     position:fixed; inset:0; overflow:hidden; overscroll-behavior:none;
   }
-  /* soft vignette above the particle field keeps text effortlessly readable */
+  /* soft vignette above the background layers keeps text effortlessly readable */
   body::after{
     content:""; position:fixed; inset:0; z-index:1; pointer-events:none;
     background:radial-gradient(120% 100% at 50% 42%, transparent 45%, rgba(10,5,7,.55) 100%);
   }
 
-  /* ---------- 3D ember field (canvas, behind everything) ---------- */
-  #space{
+  /* ---------- background layers (strictly decorative, never interactive) ---------- */
+  #space, #space3d{
     position:fixed; inset:0; z-index:0; pointer-events:none;
-    opacity:.9;
   }
+  #space{ opacity:.9; }
+  #space3d{ opacity:0; transition:opacity 1.4s var(--ease); }
+  #space3d.on{ opacity:.95; }
 
-  /* ---------- the living light ---------- */
+  /* ---------- the living light (2D lamp — kept as the always-on anchor) ---------- */
   #glow{
     position:fixed; left:50%; top:16%; width:min(88vw,520px); aspect-ratio:1;
     transform:translate(-50%,-50%) scale(1); border-radius:50%;
@@ -60,7 +62,6 @@
     transition:opacity 1s var(--ease);
     will-change:transform;
   }
-  /* slow shimmer ring gives the lamp a sense of rotation in space */
   #glow::before{
     content:""; position:absolute; inset:12%;
     border-radius:50%;
@@ -305,13 +306,14 @@
 
   @media (prefers-reduced-motion: reduce){
     *{ animation:none !important; }
-    #space{ display:none; }
+    #space, #space3d{ display:none; }
     #authbox{ transition:none; transform:none !important; }
   }
 </style>
 </head>
 <body>
   <canvas id="space" aria-hidden="true"></canvas>
+  <canvas id="space3d" aria-hidden="true"></canvas>
   <div id="glow" aria-hidden="true"></div>
 
   <!-- auth screen: shown until signed in -->
@@ -398,133 +400,409 @@
     <button class="close" id="feedbacksheet-close">close</button>
   </div>
 
-<!-- ===== 3D ember field + parallax (visual layer only — no app logic here) ===== -->
+<!-- ============================================================
+     BACKGROUND MANAGER — strictly decorative, fully isolated.
+     Order of operations:
+       1) 2D ember canvas starts instantly (cheap, proven).
+       2) After window load + idle, Three.js is lazy-loaded from CDN.
+       3) 3D scene runs an FPS probe; only if it passes does it fade
+          in over the 2D layer (which is then stopped).
+       4) ANY failure — no WebGL, low-end device heuristic, library
+          fails to load, context lost, probe fails — leaves the 2D
+          layer running. The chat never depends on any of this.
+     Touches zero app state. pointer-events:none on both canvases.
+     ============================================================ -->
 <script>
 (function(){
   "use strict";
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduced) return;   // respect it fully: no particles, no tilt
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) return;   // static gradient background only — no animated layers at all
 
-  const canvas = document.getElementById("space");
-  const ctx = canvas.getContext("2d");
-
-  // --- pre-rendered glow sprite (cheap: no shadowBlur in the hot loop) ---
-  function makeSprite(r, g, b){
-    const s = document.createElement("canvas");
-    s.width = s.height = 64;
-    const c = s.getContext("2d");
-    const grad = c.createRadialGradient(32,32,0, 32,32,32);
-    grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
-    grad.addColorStop(.35, `rgba(${r},${g},${b},.45)`);
-    grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
-    c.fillStyle = grad; c.fillRect(0,0,64,64);
-    return s;
+  // ---- shared color source: read the EXACT values from CSS custom properties ----
+  var css = getComputedStyle(document.documentElement);
+  function cvar(name, fallback){ var v = css.getPropertyValue(name).trim(); return v || fallback; }
+  var COLORS = {
+    emberCore: cvar("--ember-core", "#FFD3A0"),
+    ember:     cvar("--ember",      "#FFB877"),
+    emberDeep: cvar("--ember-deep", "#F0925A"),
+    rose:      cvar("--rose",       "#E89BA8"),
+    text:      cvar("--text",       "#F5ECE4")
+  };
+  function hexToRgb(hex){
+    var h = hex.replace("#","");
+    return { r: parseInt(h.substr(0,2),16), g: parseInt(h.substr(2,2),16), b: parseInt(h.substr(4,2),16) };
   }
-  const SPRITES = [
-    makeSprite(255,211,160),   // ember core
-    makeSprite(255,184,119),   // ember
-    makeSprite(240,146,90),    // ember deep
-    makeSprite(232,155,168),   // rose (rare)
-  ];
 
-  // --- 3D particle field ---
-  const DPR = Math.min(window.devicePixelRatio || 1, 1.5);   // cap DPR: budget phones
-  const FOV = 320;           // perspective strength
-  const DEPTH = 900;         // z range
-  let W = 0, H = 0, CX = 0, CY = 0;
-  let particles = [];
+  // ============================================================
+  // LAYER A — 2D ember field (instant, the permanent fallback)
+  // ============================================================
+  function init2D(canvas){
+    var ctx = canvas.getContext("2d");
+    function makeSprite(hex){
+      var c = hexToRgb(hex);
+      var s = document.createElement("canvas"); s.width = s.height = 64;
+      var g = s.getContext("2d");
+      var grad = g.createRadialGradient(32,32,0, 32,32,32);
+      grad.addColorStop(0,  "rgba("+c.r+","+c.g+","+c.b+",1)");
+      grad.addColorStop(.35,"rgba("+c.r+","+c.g+","+c.b+",.45)");
+      grad.addColorStop(1,  "rgba("+c.r+","+c.g+","+c.b+",0)");
+      g.fillStyle = grad; g.fillRect(0,0,64,64);
+      return s;
+    }
+    var SPRITES = [makeSprite(COLORS.emberCore), makeSprite(COLORS.ember), makeSprite(COLORS.emberDeep), makeSprite(COLORS.rose)];
+    var DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+    var FOV = 320, DEPTH = 900;
+    var W=0, H=0, CX=0, CY=0, particles = [];
 
-  function resize(){
-    W = canvas.width  = Math.floor(innerWidth * DPR);
-    H = canvas.height = Math.floor(innerHeight * DPR);
-    canvas.style.width = innerWidth + "px";
-    canvas.style.height = innerHeight + "px";
-    CX = W/2; CY = H*0.42;   // vanishing point sits near the lamp
-    const count = Math.min(90, Math.floor(innerWidth * innerHeight / 14000));
-    particles = Array.from({length: count}, newParticle);
-  }
-  function newParticle(){
+    function newParticle(){
+      return {
+        x:(Math.random()*2-1)*W*.7, y:(Math.random()*2-1)*H*.7, z:Math.random()*DEPTH,
+        r:1.4+Math.random()*2.6, v:.12+Math.random()*.4,
+        sway:Math.random()*Math.PI*2, swaySpeed:.002+Math.random()*.004,
+        sprite:SPRITES[Math.random()<.12 ? 3 : Math.floor(Math.random()*3)],
+        tw:Math.random()*Math.PI*2
+      };
+    }
+    function resize(){
+      W = canvas.width  = Math.floor(innerWidth*DPR);
+      H = canvas.height = Math.floor(innerHeight*DPR);
+      canvas.style.width = innerWidth+"px"; canvas.style.height = innerHeight+"px";
+      CX = W/2; CY = H*.42;
+      var count = Math.min(90, Math.floor(innerWidth*innerHeight/14000));
+      particles = []; for (var i=0;i<count;i++) particles.push(newParticle());
+    }
+
+    var running = false, raf = 0;
+    function loop(){
+      if (!running) return;
+      raf = requestAnimationFrame(loop);
+      ctx.clearRect(0,0,W,H);
+      for (var i=0;i<particles.length;i++){
+        var p = particles[i];
+        p.z -= p.v; p.sway += p.swaySpeed; p.tw += .02;
+        if (p.z <= 1){ var np = newParticle(); np.z = DEPTH; particles[i] = np; continue; }
+        var scale = FOV/(FOV+p.z);
+        var sx = CX + (p.x + Math.sin(p.sway)*26)*scale;
+        var sy = CY + (p.y + Math.cos(p.sway*.8)*18)*scale;
+        if (sx<-40||sx>W+40||sy<-40||sy>H+40) continue;
+        var size = p.r*scale*7*DPR;
+        var alpha = Math.min(.85, scale*1.1)*(.7+.3*Math.sin(p.tw));
+        ctx.globalAlpha = alpha*.85;
+        ctx.drawImage(p.sprite, sx-size/2, sy-size/2, size, size);
+      }
+      ctx.globalAlpha = 1;
+    }
+    function onVis(){ if (document.hidden){ cancelAnimationFrame(raf); } else if (running){ loop(); } }
+
     return {
-      x:(Math.random()*2-1) * W * .7,
-      y:(Math.random()*2-1) * H * .7,
-      z:Math.random() * DEPTH,
-      r:1.4 + Math.random()*2.6,
-      v:.12 + Math.random()*.4,          // drift toward viewer
-      sway:Math.random()*Math.PI*2,
-      swaySpeed:.002 + Math.random()*.004,
-      sprite:SPRITES[Math.random() < .12 ? 3 : Math.floor(Math.random()*3)],
-      tw:Math.random()*Math.PI*2,        // twinkle phase
+      start: function(){
+        if (running) return;
+        running = true;
+        resize();
+        addEventListener("resize", resize, { passive:true });
+        document.addEventListener("visibilitychange", onVis);
+        loop();
+        canvas.style.display = "";
+      },
+      stop: function(){
+        running = false;
+        cancelAnimationFrame(raf);
+        removeEventListener("resize", resize);
+        document.removeEventListener("visibilitychange", onVis);
+        ctx.clearRect(0,0,W,H);
+        canvas.style.display = "none";
+      }
     };
   }
 
-  // --- parallax input: pointer + device tilt, softly smoothed ---
-  let targetPX = 0, targetPY = 0, px = 0, py = 0;
-  addEventListener("pointermove", (e) => {
-    targetPX = (e.clientX / innerWidth  - .5) * 2;
-    targetPY = (e.clientY / innerHeight - .5) * 2;
-  }, { passive:true });
-  addEventListener("deviceorientation", (e) => {
-    if (e.gamma == null || e.beta == null) return;
-    targetPX = Math.max(-1, Math.min(1, e.gamma / 28));
-    targetPY = Math.max(-1, Math.min(1, (e.beta - 45) / 28));
-  }, { passive:true });
+  var canvas2d = document.getElementById("space");
+  var canvas3d = document.getElementById("space3d");
+  var bg2d = init2D(canvas2d);
+  bg2d.start();   // instant: the page is never blank, and this never blocks the chat
 
-  // --- render loop: paused whenever the tab is hidden (battery) ---
-  let running = true, raf = 0;
-  document.addEventListener("visibilitychange", () => {
-    running = !document.hidden;
-    if (running) loop();
-    else cancelAnimationFrame(raf);
+  // ============================================================
+  // capability gate — cheap checks BEFORE spending bytes on Three.js
+  // ============================================================
+  function webglSupported(){
+    try {
+      var c = document.createElement("canvas");
+      return !!(window.WebGLRenderingContext && (c.getContext("webgl") || c.getContext("experimental-webgl")));
+    } catch(e){ return false; }
+  }
+  var looksLowEnd =
+    (navigator.deviceMemory && navigator.deviceMemory <= 2) ||
+    (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) ||
+    (navigator.connection && /(^|-)2g/.test(navigator.connection.effectiveType || ""));
+  if (!webglSupported() || looksLowEnd) return;   // 2D stays — done
+
+  // ============================================================
+  // lazy-load Three.js: after window load, then idle, never blocking
+  // ============================================================
+  function loadThree(){
+    return new Promise(function(resolve, reject){
+      if (window.THREE) return resolve();
+      var s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+      s.async = true;
+      s.onload = function(){ resolve(); };
+      s.onerror = function(){ reject(new Error("three.js failed to load")); };
+      document.head.appendChild(s);
+      setTimeout(function(){ reject(new Error("three.js load timeout")); }, 15000);
+    });
+  }
+  function whenIdle(cb){
+    if ("requestIdleCallback" in window) requestIdleCallback(cb, { timeout: 3000 });
+    else setTimeout(cb, 1500);
+  }
+  function afterLoad(cb){
+    if (document.readyState === "complete") whenIdle(cb);
+    else addEventListener("load", function(){ whenIdle(cb); }, { once:true });
+  }
+
+  afterLoad(function(){
+    loadThree().then(init3D).catch(function(){ /* 2D stays, silently */ });
   });
 
-  function loop(){
-    if (!running) return;
-    raf = requestAnimationFrame(loop);
-    ctx.clearRect(0,0,W,H);
+  // ============================================================
+  // LAYER B — Three.js scene: volumetric orb + rising embers + starfield
+  // ============================================================
+  function init3D(){
+    var THREE = window.THREE;
+    var renderer, scene, camera, disposed = false;
 
-    // ease parallax so movement feels like weight, not jitter
-    px += (targetPX - px) * .045;
-    py += (targetPY - py) * .045;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas: canvas3d, alpha: true, antialias: false, powerPreference: "low-power"
+      });
+    } catch(e){ return; }   // context refused — 2D stays
 
-    for (const p of particles){
-      p.z -= p.v;
-      p.sway += p.swaySpeed;
-      p.tw += .02;
-      if (p.z <= 1){ Object.assign(p, newParticle(), { z: DEPTH }); }
+    var DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+    renderer.setPixelRatio(DPR);
+    renderer.setClearColor(0x000000, 0);
 
-      const scale = FOV / (FOV + p.z);
-      // parallax shifts deeper layers less — that differential is what sells the depth
-      const parX = px * 46 * DPR * scale;
-      const parY = py * 30 * DPR * scale;
-      const sx = CX + (p.x + Math.sin(p.sway) * 26) * scale + parX;
-      const sy = CY + (p.y + Math.cos(p.sway * .8) * 18) * scale + parY;
-      if (sx < -40 || sx > W+40 || sy < -40 || sy > H+40) continue;
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, .1, 120);
+    camera.position.set(0, 2, 18);
 
-      const size = p.r * scale * 7 * DPR;
-      const alpha = Math.min(.85, scale * 1.1) * (.7 + .3 * Math.sin(p.tw));
-      ctx.globalAlpha = alpha * .85;
-      ctx.drawImage(p.sprite, sx - size/2, sy - size/2, size, size);
+    function sizeIt(){
+      renderer.setSize(innerWidth, innerHeight, false);
+      camera.aspect = innerWidth/innerHeight;
+      camera.updateProjectionMatrix();
     }
-    ctx.globalAlpha = 1;
-  }
+    sizeIt();
 
-  addEventListener("resize", resize, { passive:true });
-  resize();
-  loop();
+    // ---- soft radial glow texture, tinted per color (shared helper) ----
+    function glowTexture(hex, innerStop){
+      var c = hexToRgb(hex);
+      var cnv = document.createElement("canvas"); cnv.width = cnv.height = 128;
+      var g = cnv.getContext("2d");
+      var grad = g.createRadialGradient(64,64,0, 64,64,64);
+      grad.addColorStop(0,  "rgba("+c.r+","+c.g+","+c.b+",1)");
+      grad.addColorStop(innerStop || .3, "rgba("+c.r+","+c.g+","+c.b+",.42)");
+      grad.addColorStop(1,  "rgba("+c.r+","+c.g+","+c.b+",0)");
+      g.fillStyle = grad; g.fillRect(0,0,128,128);
+      var tex = new THREE.CanvasTexture(cnv);
+      tex.needsUpdate = true;
+      return tex;
+    }
 
-  // --- gentle 3D tilt on the auth card (pointer only; small, never dizzy) ---
-  const box = document.getElementById("authbox");
-  const screen = document.getElementById("authscreen");
-  if (box && screen){
-    screen.addEventListener("pointermove", (e) => {
-      if (screen.hidden) return;
-      const rect = box.getBoundingClientRect();
-      const dx = (e.clientX - rect.left - rect.width/2) / rect.width;
-      const dy = (e.clientY - rect.top - rect.height/2) / rect.height;
-      box.style.transform = `rotateY(${dx*5}deg) rotateX(${dy*-5}deg)`;
-    }, { passive:true });
-    screen.addEventListener("pointerleave", () => { box.style.transform = ""; }, { passive:true });
+    // ---- 1) volumetric orb: stacked additive sprites (soft, no geometry edges) ----
+    // Sits where the CSS lamp lives (upper center), breathing on the same 6.5s period.
+    var orb = new THREE.Group();
+    var orbLayers = [
+      { tex: glowTexture(COLORS.emberCore, .18), scale: 5.5, op: .55 },
+      { tex: glowTexture(COLORS.ember,     .28), scale: 9.5, op: .30 },
+      { tex: glowTexture(COLORS.emberDeep, .35), scale: 15,  op: .16 },
+      { tex: glowTexture(COLORS.rose,      .40), scale: 20,  op: .07 }
+    ];
+    var orbSprites = orbLayers.map(function(l){
+      var m = new THREE.SpriteMaterial({ map: l.tex, transparent: true, opacity: l.op,
+        blending: THREE.AdditiveBlending, depthWrite: false });
+      var sp = new THREE.Sprite(m);
+      sp.scale.set(l.scale, l.scale, 1);
+      sp.userData.base = l.scale;
+      orb.add(sp);
+      return sp;
+    });
+    orb.position.set(0, 5.2, -6);
+    scene.add(orb);
+
+    // ---- 2) rising embers: THREE.Points, conservative counts, two warm tints ----
+    function makeEmbers(count, hex, size, spread){
+      var geo = new THREE.BufferGeometry();
+      var pos = new Float32Array(count*3);
+      var data = [];
+      for (var i=0;i<count;i++){
+        var x = (Math.random()*2-1)*spread.x;
+        var y = -8 + Math.random()*20;
+        var z = -2 - Math.random()*spread.z;
+        pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=z;
+        data.push({
+          v: .28 + Math.random()*.5,                 // upward speed
+          sway: Math.random()*Math.PI*2,
+          swaySpeed: .18 + Math.random()*.3,
+          baseX: x
+        });
+      }
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      var mat = new THREE.PointsMaterial({
+        map: glowTexture(hex, .25), size: size, sizeAttenuation: true,
+        transparent: true, opacity: .8, blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      var pts = new THREE.Points(geo, mat);
+      pts.userData = { data: data, count: count };
+      scene.add(pts);
+      return pts;
+    }
+    // deliberately conservative: 60 + 40 embers total
+    var embersA = makeEmbers(60, COLORS.ember,     .45, { x: 14, z: 16 });
+    var embersB = makeEmbers(40, COLORS.emberDeep, .6,  { x: 16, z: 24 });
+
+    // ---- 3) starfield: two depth shells of tiny faint points ----
+    function makeStars(count, hex, size, minZ, maxZ, opacity){
+      var geo = new THREE.BufferGeometry();
+      var pos = new Float32Array(count*3);
+      for (var i=0;i<count;i++){
+        pos[i*3]   = (Math.random()*2-1)*45;
+        pos[i*3+1] = (Math.random()*2-1)*30;
+        pos[i*3+2] = -(minZ + Math.random()*(maxZ-minZ));
+      }
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      var mat = new THREE.PointsMaterial({
+        map: glowTexture(hex, .2), size: size, sizeAttenuation: true,
+        transparent: true, opacity: opacity, blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      var pts = new THREE.Points(geo, mat);
+      scene.add(pts);
+      return pts;
+    }
+    // conservative: 220 stars total, split across two depth shells for parallax
+    var starsNear = makeStars(90,  COLORS.text, .28, 18, 32, .35);
+    var starsFar  = makeStars(130, COLORS.text, .2,  32, 60, .25);
+
+    // ---- animation: slow drift only — no input, nothing to "play with" ----
+    var clock = new THREE.Clock();
+    var running = true, raf = 0;
+
+    // FPS probe: skip the first second (JIT/texture upload), then measure.
+    var probeFrames = 0, probeTime = 0, probeSkip = 60, probeDone = false;
+    var PROBE_SAMPLE = 180;       // ~3s at 60fps
+    var MIN_FPS = 28;
+
+    var twoDStopped = false;
+
+    function teardown(){
+      if (disposed) return;
+      disposed = true; running = false;
+      cancelAnimationFrame(raf);
+      canvas3d.classList.remove("on");
+      scene.traverse(function(o){
+        if (o.material){ if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
+        if (o.geometry) o.geometry.dispose();
+      });
+      renderer.dispose();
+      // If the 2D layer was already retired (late failure, e.g. context lost
+      // after promotion), bring it back so the background never goes blank.
+      if (twoDStopped) bg2d.start();
+      // Otherwise 2D is still running — nothing else to do.
+    }
+
+    canvas3d.addEventListener("webglcontextlost", function(e){ e.preventDefault(); teardown(); }, false);
+
+    function promote(){
+      // probe passed: fade 3D in, then retire the 2D layer
+      canvas3d.classList.add("on");
+      setTimeout(function(){
+        if (disposed) return;
+        bg2d.stop();
+        twoDStopped = true;
+      }, 1500);
+    }
+
+    function onVis(){
+      if (document.hidden){ running = false; cancelAnimationFrame(raf); }
+      else if (!disposed){ running = true; clock.getDelta(); loop(); }
+    }
+    document.addEventListener("visibilitychange", onVis);
+    addEventListener("resize", sizeIt, { passive:true });
+
+    function loop(){
+      if (!running || disposed) return;
+      raf = requestAnimationFrame(loop);
+      var dt = Math.min(clock.getDelta(), .05);
+      var t = clock.elapsedTime;
+
+      // FPS probe
+      if (!probeDone){
+        if (probeSkip > 0){ probeSkip--; }
+        else {
+          probeFrames++; probeTime += dt;
+          if (probeFrames >= PROBE_SAMPLE){
+            probeDone = true;
+            var fps = probeFrames / probeTime;
+            if (fps < MIN_FPS){ teardown(); return; }
+            promote();
+          }
+        }
+      }
+
+      // orb breathing — same 6.5s period as the CSS lamp
+      var breathe = 1 + .07 * Math.sin(t * (Math.PI*2/6.5));
+      for (var i=0;i<orbSprites.length;i++){
+        var sp = orbSprites[i];
+        sp.scale.set(sp.userData.base*breathe, sp.userData.base*breathe, 1);
+      }
+
+      // embers rising with sway
+      [embersA, embersB].forEach(function(sys){
+        var posAttr = sys.geometry.getAttribute("position");
+        var arr = posAttr.array, data = sys.userData.data;
+        for (var i=0;i<sys.userData.count;i++){
+          var d = data[i];
+          d.sway += d.swaySpeed*dt;
+          arr[i*3+1] += d.v*dt;
+          arr[i*3]   = d.baseX + Math.sin(d.sway)*.8;
+          if (arr[i*3+1] > 13){
+            arr[i*3+1] = -9;
+            d.baseX = (Math.random()*2-1)*15;
+            arr[i*3] = d.baseX;
+          }
+        }
+        posAttr.needsUpdate = true;
+      });
+
+      // near-imperceptible camera drift (Lissajous), always looking at the orb
+      camera.position.x = Math.sin(t*.05)*.55;
+      camera.position.y = 2 + Math.cos(t*.037)*.35;
+      camera.lookAt(0, 4.2, -6);
+
+      // starfield twinkle via whole-layer opacity sway (cheap, no per-star work)
+      starsNear.material.opacity = .3 + .08*Math.sin(t*.7);
+      starsFar.material.opacity  = .22 + .05*Math.sin(t*.53 + 1.7);
+
+      renderer.render(scene, camera);
+    }
+    loop();
   }
+})();
+</script>
+
+<!-- ===== auth-card tilt (UI micro-interaction, separate from the background) ===== -->
+<script>
+(function(){
+  "use strict";
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var box = document.getElementById("authbox");
+  var screen = document.getElementById("authscreen");
+  if (!box || !screen) return;
+  screen.addEventListener("pointermove", function(e){
+    if (screen.hidden) return;
+    var rect = box.getBoundingClientRect();
+    var dx = (e.clientX - rect.left - rect.width/2) / rect.width;
+    var dy = (e.clientY - rect.top - rect.height/2) / rect.height;
+    box.style.transform = "rotateY(" + (dx*5) + "deg) rotateX(" + (dy*-5) + "deg)";
+  }, { passive:true });
+  screen.addEventListener("pointerleave", function(){ box.style.transform = ""; }, { passive:true });
 })();
 </script>
 
