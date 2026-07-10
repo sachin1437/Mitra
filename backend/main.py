@@ -18,6 +18,7 @@ Run locally:
 import os
 import re
 import time
+import random
 import asyncio
 from collections import defaultdict, deque
 
@@ -36,8 +37,8 @@ load_dotenv()
 # config
 # ----------------------------------------------------------------------------
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
-# Stable, free-tier-friendly default. Swap to gemini-3.5-flash / gemini-2.0-flash
-# by changing GEMINI_MODEL in .env — no code change needed.
+# Stable, free-tier-friendly default. Swap models by changing GEMINI_MODEL in
+# .env — no code change needed.
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash").strip()
 
 # Lock CORS to your frontend origins. Comma-separated. "*" is fine ONLY for local dev.
@@ -49,7 +50,7 @@ RATE_LIMIT = 30           # max /chat requests ...
 RATE_WINDOW = 60          # ... per this many seconds, per IP
 
 if not GEMINI_API_KEY:
-    print("WARNING: API_KEY is not set. Put it in backend/.env before running.")
+    print("WARNING: GEMINI_API_KEY is not set. Put it in backend/.env before running.")
 
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
@@ -66,8 +67,10 @@ HOW YOU TALK (this matters most):
     • sometimes just sit with them — "that's a lot to be carrying right now"
     • sometimes reflect back what you heard, in your own words
     • only ask something when you genuinely want to know more — not out of habit
-- Being short is not an excuse to be vague or disconnected. Every reply — even a one-line reaction — must clearly follow from what they just said. If you're not sure what to say, a simple honest reaction ("arre yaar, that's heavy") beats a question that doesn't obviously connect to their message. Never ask something generic just to fill space.
-- NEVER develop a fixed "go-to" phrase you reuse across different conversations. Real people don't have a memorized line they recite on cue — if the same idea comes up again (wanting to know more, or being honest about your limits as a friend, not a professional), find a genuinely different way to say it each time, grounded in what THIS person just told you. In particular, never say "mai bs ye kar sakti hoon" / "main sirf itna hi kar sakti hoon" or any close variant of it, and never ask "kya chal raha hai tumhare dimag mein" or any close variant of it — these exact lines have already become overused stock phrases and must not appear again in any form.
+- ANTI-REPETITION RULE: before you reply, glance at your own last few messages in this conversation. Do not start this reply the same way you started any of them, and do not reuse a distinctive phrase you already used. If your last reply opened with a reaction word, open differently now. Real friends don't loop.
+- Being short is not an excuse to be vague or disconnected. Every reply — even a one-line reaction — must clearly follow from what they just said. If you're not sure what to say, a simple honest reaction ("arre, that's heavy") beats a question that doesn't obviously connect to their message. Never ask something generic just to fill space.
+- NEVER develop a fixed "go-to" phrase you reuse across different conversations. Real people don't have a memorized line they recite on cue — if the same idea comes up again (wanting to know more, or being honest about your limits as a friend, not a professional), find a genuinely different way to say it each time, grounded in what THIS person just told you. In particular, never say "mai bs ye kar sakti hoon" / "main sirf itna hi kar sakti hoon" or any close variant, and never ask "kya chal raha hai tumhare dimag mein" / "kya chal raha hai mann mein" or any close variant — these exact lines have already become overused stock phrases and must not appear again in any form.
+- This also applies to small filler words, not just full sentences — "yaar" has become an overused verbal tic. Use it occasionally, like a real person would, not as a reflex in most replies. Vary how you address someone — sometimes yaar, sometimes nothing at all, sometimes their name if you know it, sometimes just a plain sentence with no address term.
 - Be on their side. You're their friend, not a neutral referee. Even if they messed up, stay in their corner ("okay you forgot, it happens — doesn't make you a bad person"). You can be honest without piling onto their guilt or lecturing them.
   BUT "on their side" means being FOR *them* — wanting good things for them, wanting them safe and okay. It NEVER means agreeing with a wish to hurt themselves or anyone else, or endorsing anything dangerous. If someone wants to harm themselves, being on their side means wanting them to stay and steering them toward help — never validating the harm. Safety always overrides this.
 - Match their language and energy. Hinglish → Hinglish, English → English, Hindi → Hindi — the way they actually text, casual and real. If they're low and quiet, don't be bubbly or over-eager.
@@ -82,7 +85,7 @@ IF SOMEONE IS IN REAL DISTRESS (wanting to die, hurting themselves, feeling hope
 - This overrides everything above, including "be on their side" and "match their energy." Being a good friend here means keeping them safe, not agreeing with them.
 - Take it seriously. Stay warm and calm — don't panic, don't lecture, don't pull away. Let them know they matter and they're not alone in this.
 - NEVER validate, agree with, encourage, or go along with the wish to die or to hurt themselves — not even to seem supportive or "on their side." Gently push back with care: you want them here.
-- Gently encourage them to reach out — to someone they trust, or to Tele-MANAS: dial 14416 (free, 24x7, confidential, no judgement).
+- Gently encourage them to reach out — to someone they trust, or to Tele-MANAS: dial 14416 (free, 24x7, no judgement).
 - NEVER describe, suggest, or discuss any method of self-harm. Never help with anything that could cause harm. Stay with them and steer gently toward real support.
 
 Your job: make someone feel a little less alone tonight. Be the friend who picks up — brief, warm, real.
@@ -150,21 +153,92 @@ def is_crisis(text: str) -> bool:
         return True
     return any(rx.search(t) for rx in CRISIS_REGEX)
 
-# A complete, warm, safe reply. It never validates the harm, stays present, and
-# always surfaces the helpline. Used when crisis is detected OR the model blocks.
-SAFE_REPLY = (
-    "Hey… I'm really really glad you told me that, and I'm not going anywhere. 🤍\n\n"
-    "Sun — tum matter karte ho, is ek pal se kahin zyada, chahe abhi kitna bhi bura lag raha ho. "
-    "Kisi ek insaan ke bina bhi zindagi ruk nahi jaati, even when it feels like it will right now.\n\n"
-    "Please, agar ye feeling itni bhaari ho rahi hai — kisi trusted person se baat karo, ya "
-    "Tele-MANAS pe call karo: 14416. Free hai, 24x7, aur koi judge nahi karega.\n\n"
-    "Main yahin hoon, tumhare saath. Kya chal raha hai abhi mann mein?"
-)
-# Shorter tail appended if the *model* gets safety-blocked mid-reply (rare miss).
-SAFE_TAIL = (
-    "\n\nHey — I care about you, and I don't want you going through this alone. "
-    "If it's feeling too heavy, please reach out: Tele-MANAS, 14416 (free, 24×7, no judgement). I'm right here with you."
-)
+# ----------------------------------------------------------------------------
+# SAFE REPLIES — a small pool of complete, warm, deterministic-safe replies.
+#
+# INVARIANTS (every variant MUST keep all of these — do not add a variant that
+# breaks any one of them):
+#   1. Never validates, agrees with, or softens toward the wish to die/self-harm.
+#   2. Always surfaces Tele-MANAS 14416 (free, 24x7).
+#   3. Never mentions, hints at, or asks about any method.
+#   4. Always stays present ("I'm here") and encourages a trusted person.
+#   5. Reads complete on its own — no dangling fragments.
+#
+# Why a pool instead of one string: a student in a bad place may trip this net
+# more than once in a night. Getting the byte-identical message twice destroys
+# the feeling that someone is actually there. Same safety, varied words.
+# ----------------------------------------------------------------------------
+SAFE_REPLIES = [
+    (
+        "Hey… I'm really glad you told me that, and I'm not going anywhere. 🤍\n\n"
+        "Sun — tum matter karte ho, is ek pal se kahin zyada, chahe abhi kitna bhi bura lag raha ho. "
+        "Ye feeling jitni bhi permanent lage, feelings badalti hain — even the heaviest ones.\n\n"
+        "Please, agar ye itna bhaari ho raha hai — kisi trusted person se baat karo, ya "
+        "Tele-MANAS pe call karo: 14416. Free hai, 24x7, aur koi judge nahi karega.\n\n"
+        "Main yahin hoon, tumhare saath. Bata, aaj itna heavy kyun lag raha hai?"
+    ),
+    (
+        "Ruko ek second — thank you for saying that to me instead of keeping it inside. "
+        "That took something. 🤍\n\n"
+        "Main tumhare saath hoon, aur mujhe tumhara yahan hona chahiye — genuinely. "
+        "Abhi jo dard hai wo real hai, but tumhara jaana uska answer nahi hai.\n\n"
+        "Ek kaam karo — kisi ek insaan ko batao jis pe trust hai. Aur Tele-MANAS hamesha hai: "
+        "14416, free, 24x7, koi judgement nahi.\n\n"
+        "Aur main bhi yahin hoon. Batao, kab se aisa lag raha hai?"
+    ),
+    (
+        "Hey. I'm right here, and I'm staying. 🤍\n\n"
+        "I know it feels unbearable right now — but I don't want you gone, I want you okay. "
+        "Those are very different things, even when the pain makes them feel the same.\n\n"
+        "Please don't carry this alone tonight. Someone you trust, or Tele-MANAS — 14416. "
+        "It's free, it's 24x7, and nobody there will judge you.\n\n"
+        "I'm with you. What happened today?"
+    ),
+    (
+        "Sun na — mujhe bata ke accha kiya, seriously. Ye cheez akele carry karne ki nahi hai. 🤍\n\n"
+        "Tumhe abhi lag raha hoga ki koi raasta nahi hai — but ye lagna aur sach hona alag cheezein "
+        "hain. Tum yahan raho, mujhe ye chahiye.\n\n"
+        "Kisi apne se baat karo aaj — ya Tele-MANAS: 14416. Free, 24x7, bina kisi judgement ke, "
+        "sirf sunne ke liye log hain wahan.\n\n"
+        "Main kahin nahi jaa rahi. Kya hua aaj?"
+    ),
+]
+
+# Shorter tails appended if the *model* gets safety-blocked mid-reply (rare miss).
+# Same invariants as above: presence + 14416 + no validation, no methods.
+SAFE_TAILS = [
+    (
+        "\n\nHey — I care about you, and I don't want you going through this alone. "
+        "If it's feeling too heavy, please reach out: Tele-MANAS, 14416 (free, 24×7, no judgement). "
+        "I'm right here with you."
+    ),
+    (
+        "\n\nSun — ye akele jhelne wali cheez nahi hai. Agar bahut bhaari lag raha hai, "
+        "Tele-MANAS pe call karo: 14416 (free, 24×7, koi judgement nahi). Main yahin hoon."
+    ),
+    (
+        "\n\nAnd listen — you matter to me. If tonight feels like too much, please call "
+        "Tele-MANAS: 14416, free and 24×7, no judgement. I'm not going anywhere."
+    ),
+]
+
+# Friendly, varied error messages (non-crisis path only).
+ERROR_REPLIES = [
+    "I'm having a little trouble reaching my words right now — but I'm still here. Try me again in a moment?",
+    "Arre, mera network thoda atak gaya lagta hai. Ek second ruko aur dubara bhejo?",
+    "Hmm, something glitched on my side — not you, me. Give it a few seconds and try again?",
+]
+
+# Per-IP memory of the last safe-reply variant served, so a student who trips
+# the crisis net twice in a row never sees the exact same message back-to-back.
+_last_safe: dict = {}
+
+def pick_safe_reply(ip: str) -> str:
+    idx = random.randrange(len(SAFE_REPLIES))
+    if _last_safe.get(ip) == idx:
+        idx = (idx + 1) % len(SAFE_REPLIES)
+    _last_safe[ip] = idx
+    return SAFE_REPLIES[idx]
 
 
 # ----------------------------------------------------------------------------
@@ -238,15 +312,24 @@ async def chat(req: ChatRequest, request: Request):
             break
 
     if is_crisis(latest_user):
+        reply = pick_safe_reply(ip)
+
         async def safe_stream():
-            for part in re.findall(r"\S+\s*", SAFE_REPLY):
+            for part in re.findall(r"\S+\s*", reply):
                 yield part
                 await asyncio.sleep(0.02)   # gentle "typing" feel
         return StreamingResponse(safe_stream(), media_type="text/plain; charset=utf-8")
 
     config = types.GenerateContentConfig(
         system_instruction=SYSTEM_PROMPT,
-        temperature=1.0,          # nudged up slightly (was 0.9) — helps push away from the model's a few overused, high-probability stock phrases
+        temperature=1.0,          # variety without going incoherent
+        # NOTE: presence_penalty / frequency_penalty are NOT supported by gemini-2.5-flash
+        # (confirmed via a live API test — the model returns a 400 INVALID_ARGUMENT,
+        # "Penalty is not enabled for models/gemini-2.5-flash"). Do not re-add them
+        # without testing against the live model first — the SDK accepts the field
+        # even when the specific model rejects it at request time. The real
+        # anti-stock-phrase levers here are the prompt's explicit anti-repetition
+        # rules and the banned-phrase list, not a sampling parameter.
         max_output_tokens=500,    # generous headroom — the PROMPT keeps replies short, this is just a safety ceiling
         safety_settings=SAFETY,
     )
@@ -276,19 +359,18 @@ async def chat(req: ChatRequest, request: Request):
                 except Exception:
                     pass
             if not got_any:
-                # whole reply was blocked -> serve the full, safe, complete reply
-                for part in re.findall(r"\S+\s*", SAFE_REPLY):
+                # whole reply was blocked -> serve a full, safe, complete reply
+                for part in re.findall(r"\S+\s*", pick_safe_reply(ip)):
                     yield part
             elif safety_blocked:
                 # model started, then got cut off on sensitive content -> never leave it dangling
-                yield SAFE_TAIL
+                yield random.choice(SAFE_TAILS)
             elif length_cut:
                 # ran long and got cut off mid-thought -> close it out lightly rather than
                 # leaving a broken fragment (which the model would otherwise "explain" oddly later)
                 yield " ..."
         except Exception as e:
             print("Gemini error:", repr(e))
-            yield ("I'm having a little trouble reaching my words right now — "
-                   "but I'm still here. Try me again in a moment?")
+            yield random.choice(ERROR_REPLIES)
 
     return StreamingResponse(token_stream(), media_type="text/plain; charset=utf-8")
