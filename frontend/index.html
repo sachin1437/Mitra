@@ -231,9 +231,13 @@
   #mic:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
   #mic:active{ transform:scale(.92); }
   #mic[hidden]{ display:none; }
+  #mic .mic-live{ display:none; }
+  #mic.recording .mic-idle{ display:none; }
+  #mic.recording .mic-live{ display:block; }
   #mic.recording{
-    border-color:var(--ember); color:var(--ember-core);
-    background:linear-gradient(180deg, rgba(255,176,102,.20), rgba(255,176,102,.08));
+    border-color:var(--ember-core); color:var(--night-edge);
+    background:linear-gradient(180deg, var(--ember-core), var(--ember));
+    box-shadow:0 8px 26px -10px rgba(255,176,102,.7);
     animation:micpulse 1.4s var(--ease) infinite;
   }
   @keyframes micpulse{
@@ -354,11 +358,14 @@
     <div id="composer">
       <textarea id="box" rows="1" placeholder="type whatever's on your mind..." maxlength="1500"></textarea>
       <button id="mic" aria-label="Speak instead of typing" hidden>
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="mic-idle" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
           <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
           <line x1="12" y1="19" x2="12" y2="23"/>
           <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+        <svg class="mic-live" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <rect x="6" y="6" width="12" height="12" rx="3"/>
         </svg>
       </button>
       <button id="send" aria-label="Send">
@@ -1225,67 +1232,65 @@
   });
   send.addEventListener("click", sendMessage);
 
-  // ====================== voice input (speak -> fills box, never auto-sends) ======================
-  // Deliberately INPUT-ONLY: no text-to-speech. Transcribed speech lands in the
-  // textbox for the student to review/edit, then goes through the SAME
-  // sendMessage() path (and therefore the same crisis-detection backstop) as
-  // anything typed. This must never create a second, safety-bypassing send path.
+  // ====================== voice input (speak -> live transcript -> auto-send) ======================
+  // Speech lands in the box live (interim results) so the student sees what's
+  // being heard. When speech ends, the message AUTO-SENDS through the SAME
+  // sendMessage() path as typing — same crisis-detection backstop, same
+  // everything. There is still no second, safety-bypassing send path.
+  // Tap the mic again while recording = stop early (what was heard still sends).
   (function initVoice(){
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR){ mic.hidden = true; return; }   // graceful degrade (e.g. Safari/iOS)
     mic.hidden = false;
 
+    const IDLE_PLACEHOLDER = box.placeholder;
     let recognizing = false;
-    let voiceComposed = false;   // true if current draft in the box came from voice
+    let heardSomething = false;   // a FINAL transcript actually landed
+    let baseText = "";            // whatever was typed before recording started
     const recog = new SR();
     recog.lang = "en-IN";
     recog.continuous = false;
-    recog.interimResults = false;
+    recog.interimResults = true;  // live words appear in the box while speaking
 
     function setRecording(on){
       recognizing = on;
       mic.classList.toggle("recording", on);
+      box.placeholder = on ? "listening… speak now" : IDLE_PLACEHOLDER;
     }
 
     mic.addEventListener("click", () => {
       if (recognizing){ recog.stop(); return; }
+      baseText = box.value.trim();
+      heardSomething = false;
       try { recog.start(); setRecording(true); }
       catch(e){ setRecording(false); }
     });
 
     recog.addEventListener("result", (e) => {
-      const transcript = Array.from(e.results).map(r => r[0].transcript).join(" ").trim();
-      if (!transcript) return;
-      const sep = box.value.trim() ? " " : "";
-      box.value = (box.value.trim() + sep + transcript).trim();
-      voiceComposed = true;
+      let finalT = "", interimT = "";
+      for (let i = 0; i < e.results.length; i++){
+        const r = e.results[i];
+        if (r.isFinal) finalT += r[0].transcript;
+        else interimT += r[0].transcript;
+      }
+      const sep = baseText ? " " : "";
+      box.value = (baseText + sep + (finalT + " " + interimT).trim()).trim();
+      if (finalT.trim()) heardSomething = true;
       autosize();
-      box.focus();
     });
 
-    recog.addEventListener("end", () => setRecording(false));
-    recog.addEventListener("error", () => setRecording(false));
-
-    // reset the voice flag once the user edits the box by hand after a transcription
-    box.addEventListener("keydown", (e) => {
-      if (voiceComposed && e.key !== "Enter") voiceComposed = false;
+    recog.addEventListener("end", () => {
+      setRecording(false);
+      if (heardSomething && box.value.trim()){
+        heardSomething = false;
+        const uses = parseInt(localStorage.getItem("mitra_voice_uses") || "0", 10) + 1;
+        localStorage.setItem("mitra_voice_uses", String(uses));
+        ev("voice_used", { uses, firstUse: uses === 1 });
+        sendMessage();   // the one and only send path
+      }
     });
 
-    // Metric bookkeeping only — does NOT call sendMessage itself and does NOT
-    // replace the existing send handlers. It runs alongside them (both listeners
-    // fire on the same click/keydown), so the real send path is untouched and
-    // there's no second path that could bypass the crisis-detection backstop.
-    function trackIfVoice(){
-      if (!voiceComposed) return;
-      const uses = parseInt(localStorage.getItem("mitra_voice_uses") || "0", 10) + 1;
-      localStorage.setItem("mitra_voice_uses", String(uses));
-      ev("voice_used", { uses, firstUse: uses === 1 });
-      voiceComposed = false;
-    }
-    send.addEventListener("click", trackIfVoice);
-    box.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) trackIfVoice();
-    });
+    recog.addEventListener("error", () => { heardSomething = false; setRecording(false); });
   })();
 
   // ====================== privacy sheet ======================
