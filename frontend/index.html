@@ -998,42 +998,42 @@
   function greetingLine(){
     const h = new Date().getHours();
     if (h >= 0 && h < 5) return pick([
-      "Hey. It's pretty late na... couldn't sleep? I'm here. Kya chal raha hai mann mein?",
+      "Hey. It's pretty late... couldn't sleep? I'm here if you want to talk.",
       "It's that quiet 3am kind of hour. I'm awake too, in a way. What's keeping you up?",
-      "Raat ho gayi hai aur tum abhi bhi yahan ho. I'm glad you're here. Sab theek hai?",
       "Still up? Same. I'm around if you want to talk about whatever's on your mind.",
+      "Late night, huh. I'm here — what's going on?",
     ]);
     if (h >= 5 && h < 12) return pick([
-      "Morning 🌅 how are you actually feeling as you start the day — sach mein?",
+      "Morning 🌅 how are you actually feeling as you start the day?",
       "Hey, good morning. Before the day gets busy — how are you, really?",
-      "Naya din hai. Kaisa lag raha hai abhi, seedha seedha bata?",
-      "Morning! Fresh start to the day — kaisa feel ho raha hai?",
+      "Morning! Fresh start. How are you feeling today?",
+      "New day. How's it looking from where you are?",
     ]);
     if (h >= 12 && h < 17) return pick([
       "Hey. What's been going on with you today?",
-      "Kaisa chal raha hai din? I'm here if you want to talk.",
       "Hey, taking a break? What's going on with you today?",
-      "Middle of the day check-in — kaisa chal raha hai sab?",
+      "Middle of the day check-in — how's everything going?",
+      "How's the day treating you so far?",
     ]);
     if (h >= 17 && h < 22) return pick([
       "Evening. That quiet hour when things settle down. How was your day, really?",
-      "Shaam ho gayi. Din kaisa raha, sach mein batao?",
       "Hey, evening. Things usually get quieter around now. What's on your mind?",
       "Evening's here. How are you holding up today?",
+      "Day's winding down. How did it go, honestly?",
     ]);
     return pick([
-      "Hey, you're up late too. I'm around if you feel like talking. Kya haal hai?",
-      "Raat ho chali hai. I'm here if you want company for a bit.",
+      "Hey, you're up late too. I'm around if you feel like talking.",
       "Late night thoughts hitting? I'm around, talk to me.",
       "Hey. Everyone else's probably asleep, but I'm not. What's up?",
+      "Night's gotten quiet. I'm here if you want company for a bit.",
     ]);
   }
   function returnLine(){
     return pick([
       "Hey, you're back 🌙 I was thinking about our last chat. How have you been since?",
-      "You're back. I missed this — kaisa chal raha hai ab sab?",
+      "You're back. I missed this — how's everything been?",
       "Hey, good to see you again. What's new since we last talked?",
-      "Welcome back 🌙 kya haal hai, sab kuch theek?",
+      "Welcome back 🌙 how have things been?",
     ]);
   }
 
