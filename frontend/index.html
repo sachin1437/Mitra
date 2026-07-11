@@ -118,6 +118,13 @@
   .auth-links{ display:flex; justify-content:space-between; margin-top:1.1rem; gap:.6rem; flex-wrap:wrap; }
   .linkbtn{ appearance:none; background:none; border:none; color:var(--muted); font-family:inherit; font-size:.84rem; cursor:pointer; padding:.2rem; transition:color .2s; }
   .linkbtn:hover{ color:var(--ember-core); }
+  #logout-btn{
+    font-weight:700; font-size:.92rem; color:var(--rose);
+    border:1.5px solid rgba(232,155,168,.45); border-radius:100px;
+    padding:.55rem 1.3rem;
+    transition:background .2s var(--ease), color .2s;
+  }
+  #logout-btn:hover{ background:rgba(232,155,168,.14); color:var(--rose); }
 
   /* primary warm CTA button (login/signup + reusable anywhere a full-width primary action is needed) */
   .cta{
@@ -1355,6 +1362,7 @@
   });
 
   document.getElementById("logout-btn").addEventListener("click", async () => {
+    openSheet(false);   // close the sheet first — otherwise it sits on top of the auth screen and logout looks like it did nothing
     if (window.__mitraLogOut) await window.__mitraLogOut();
     // __mitraOnAuthChange fires on its own and shows the auth screen again
   });
@@ -1413,6 +1421,7 @@
   function onSignedOut(){
     initializedFor = null;
     currentUid = null; chats = {}; activeId = null; messages = [];
+    openSheet(false); openChats(false); openFeedback(false);   // no sheet should survive a logout
     appEl.hidden = true;
     authscreen.hidden = false;
     authEmail.value = ""; authPassword.value = ""; clearAuthError();
