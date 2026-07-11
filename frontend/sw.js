@@ -1,6 +1,6 @@
 // Mitra — minimal service worker (makes it an installable PWA + fast shell load).
 // Chat replies always go to the network; only the static shell is cached.
-const CACHE = "mitra-v4";
+const CACHE = "mitra-v5";
 const SHELL = ["./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
   "./favicon.ico", "./favicon-32x32.png", "./favicon-16x16.png", "./apple-touch-icon.png"];
 

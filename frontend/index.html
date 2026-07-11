@@ -209,6 +209,8 @@
     padding:.8rem 1.05rem; transition:border-color .25s var(--ease), background .25s var(--ease);
     backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   }
+  #box{ overflow-y:auto; scrollbar-width:none; }
+  #box::-webkit-scrollbar{ display:none; }
   #box::placeholder{ color:var(--faint); }
   #box:focus{ outline:none; border-color:var(--ember); background:rgba(255,176,102,.05); }
   #send{
@@ -908,6 +910,10 @@
   // After you deploy the backend (Render/Railway), put that https URL here.
   const API_BASE = "https://mitra-chat-backend.onrender.com";
 
+  // Wake the Render dyno immediately — free tier spins down after idle and takes
+  // 30-60s to boot. By the time the user types their first message, it's warm.
+  fetch(API_BASE + "/health").catch(()=>{});
+
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // ====================== elements ======================
@@ -1167,10 +1173,22 @@
 
     let mitraEl = null, acc = "";
     try {
-      const resp = await fetch(API_BASE + "/chat", {
-        method:"POST", headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ messages })
-      });
+      // One quiet retry: covers a Render dyno that's mid-boot (cold start).
+      // Typing dots stay visible, so the user just sees Mitra "thinking" longer.
+      let resp = null;
+      try {
+        resp = await fetch(API_BASE + "/chat", {
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ messages })
+        });
+      } catch(_){ resp = null; }
+      if (!resp || !resp.ok){
+        await new Promise(r => setTimeout(r, 3500));
+        resp = await fetch(API_BASE + "/chat", {
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ messages })
+        });
+      }
       if (!resp.ok || !resp.body) throw new Error("bad response");
 
       const reader = resp.body.getReader();
