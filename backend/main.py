@@ -331,6 +331,11 @@ async def chat(req: ChatRequest, request: Request):
     config = types.GenerateContentConfig(
         system_instruction=SYSTEM_PROMPT,
         temperature=1.0,          # variety without going incoherent
+        # gemini-2.5-flash "thinks" by default, and its hidden thinking tokens
+        # count INSIDE max_output_tokens — so a 500-token budget can be almost
+        # entirely eaten by thought, truncating the visible reply mid-sentence.
+        # Mitra's replies are 1-3 casual sentences; thinking adds nothing here.
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
         # NOTE: presence_penalty / frequency_penalty are NOT supported by gemini-2.5-flash
         # (confirmed via a live API test — the model returns a 400 INVALID_ARGUMENT,
         # "Penalty is not enabled for models/gemini-2.5-flash"). Do not re-add them
