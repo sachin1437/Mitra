@@ -385,12 +385,13 @@
   <div id="sheet-bg"></div>
   <div id="sheet">
     <h3>just so you know 🌙</h3>
-    <p><b>Our chats live only on your phone.</b> I don't save them to any server, and no one reads them. Clear this tab and they're gone.</p>
-    <p>To reply, your messages are sent to an AI over a secure connection — used only to write back to you, never stored, never read by a person.</p>
-    <p>No login. No name. I only count anonymous things — like whether people come back — to know if I'm actually helping.</p>
-    <p style="color:var(--faint); font-size:.82rem;">I'm a friend to talk to, not a therapist or doctor. If things feel heavy, talking to someone you trust — or Tele-MANAS (14416, free, 24×7) — can really help.</p>
+    <p><b>Your chats are saved to your own private account</b> so they're right where you left them, even on a new device. Only you can see them in the app. Delete a chat and it's gone from our records for real.</p>
+    <p>To reply, your messages are sent to an AI over a secure connection. They're used only to write back to you, and we don't read your conversations.</p>
+    <p>We count a few basic usage signals, like whether people come back, to know if Mitra is actually helping. Never the content of what you say.</p>
+    <p style="color:var(--faint); font-size:.82rem;">I'm a friend to talk to, not a therapist or doctor. If things feel heavy, talking to someone you trust — or Tele-MANAS (<a href="tel:14416" style="color:var(--ember-core); text-decoration:none; border-bottom:1px dashed var(--ember-core);">14416</a>, free, 24×7) — can really help.</p>
     <button class="close" id="sheet-close">okay</button>
     <button class="linkbtn" id="feedback-open" style="display:block; margin:.9rem auto 0;">suggest something / tell us what's off</button>
+    <button class="linkbtn" id="wipe-btn" style="display:block; margin:.5rem auto 0;">delete all my chats</button>
     <button class="linkbtn" id="logout-btn" style="display:block; margin:.5rem auto 0;">log out</button>
   </div>
 
@@ -1158,7 +1159,7 @@
       card.className = "support";
       card.innerHTML = "It sounds like you're carrying something really heavy right now — and I'm really glad you said it out loud. You're not alone in this, and I'm right here with you. "
         + "If it would help to talk to someone who's trained for exactly this, <b>Tele-MANAS</b> is free, 24×7, and there's no judgement:"
-        + "<span class='tele'>dial 14416</span>";
+        + "<a class='tele' href='tel:14416' style='color:var(--ember-core); text-decoration:none; border-bottom:1px dashed var(--ember-core);'>dial 14416</a>";
       thread.appendChild(card); scroll();
       ev("support_shown");
     }
@@ -1168,6 +1169,14 @@
   async function sendMessage(){
     const text = box.value.trim();
     if (!text || busy) return;
+
+    // offline guard: don't consume their message (it stays in the box), just
+    // let them know gently — no failed fetch, no retry burn, nothing lost.
+    if (!navigator.onLine){
+      bubble("mitra", "Looks like your internet dropped for a moment. I'm right here — your message is safe in the box, send it once you're back online. 🌙");
+      scroll();
+      return;
+    }
 
     messages.push({ role:"user", content:text });
     bubble("user", text);
@@ -1365,6 +1374,24 @@
     openSheet(false);   // close the sheet first — otherwise it sits on top of the auth screen and logout looks like it did nothing
     if (window.__mitraLogOut) await window.__mitraLogOut();
     // __mitraOnAuthChange fires on its own and shows the auth screen again
+  });
+
+  // delete ALL chats (privacy control — a privacy-first app must offer a full wipe)
+  document.getElementById("wipe-btn").addEventListener("click", async () => {
+    if (!confirm("Delete ALL your chats forever? This can't be undone.")) return;
+    const ids = Object.keys(chats);
+    for (const cid of ids){
+      if (window.__mitraDeleteChat && currentUid) await window.__mitraDeleteChat(currentUid, cid);
+    }
+    chats = {};
+    newChat();          // fresh greeting, fresh start
+    openSheet(false);
+    ev("wipe_all");
+  });
+
+  // Escape closes any open sheet
+  addEventListener("keydown", (e) => {
+    if (e.key === "Escape"){ openSheet(false); openChats(false); openFeedback(false); }
   });
 
   // ====================== feedback sheet ======================
