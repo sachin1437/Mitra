@@ -49,6 +49,40 @@ MAX_HISTORY = 20          # cap turns sent to the model (cost control)
 RATE_LIMIT = 30           # max /chat requests ...
 RATE_WINDOW = 60          # ... per this many seconds, per IP
 
+# HARD COST CEILING: max model calls per day across ALL users. Google Cloud
+# "budgets" only email you — they never stop spending. This does. At roughly
+# ₹0.07 per message on paid Tier 1, the default 5000/day ≈ ₹350/day worst case.
+# Tune via env without code change. Crisis replies are NOT counted or blocked
+# by this — they never call the model and must always work.
+MAX_DAILY_MSGS = int(os.environ.get("MAX_DAILY_MSGS", "5000"))
+# Fair-share layer: max model calls per user (IP) per day, so one heavy user
+# can't drain the global budget for everyone. Resets at midnight with the
+# global counter. 150/day is a LOT of heart-to-heart for one person.
+PER_IP_DAILY = int(os.environ.get("PER_IP_DAILY", "150"))
+_day_state = [time.strftime("%Y-%m-%d"), 0]   # [date, global count] — in-memory, resets on redeploy (fine: protective, not accounting)
+_ip_daily = defaultdict(int)                   # per-IP counts for the current date
+
+def _roll_day():
+    today = time.strftime("%Y-%m-%d")
+    if _day_state[0] != today:
+        _day_state[0] = today
+        _day_state[1] = 0
+        _ip_daily.clear()
+
+def daily_capped() -> bool:
+    _roll_day()
+    if _day_state[1] >= MAX_DAILY_MSGS:
+        return True
+    _day_state[1] += 1
+    return False
+
+def ip_daily_capped(ip: str) -> bool:
+    _roll_day()
+    if _ip_daily[ip] >= PER_IP_DAILY:
+        return True
+    _ip_daily[ip] += 1
+    return False
+
 if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY is not set. Put it in backend/.env before running.")
 
@@ -346,6 +380,19 @@ async def chat(req: ChatRequest, request: Request):
                 yield part
                 await asyncio.sleep(0.02)   # gentle "typing" feel
         return StreamingResponse(safe_stream(), media_type="text/plain; charset=utf-8")
+
+    # ---- DAILY LIMITS (cost ceiling + fair share) ----
+    # Checked AFTER the crisis net on purpose: a student in crisis always gets
+    # the full safe reply (it's free — no model call). Everyone else gets the
+    # honest "out of words for today" message once a cap is hit.
+    if ip_daily_capped(ip) or daily_capped():
+        capped_reply = random.choice(QUOTA_REPLIES)
+
+        async def capped_stream():
+            for part in re.findall(r"\S+\s*", capped_reply):
+                yield part
+                await asyncio.sleep(0.02)
+        return StreamingResponse(capped_stream(), media_type="text/plain; charset=utf-8")
 
     config = types.GenerateContentConfig(
         system_instruction=SYSTEM_PROMPT,
