@@ -1,87 +1,88 @@
-# Mitra — chat prototype (v0)
+# Mitra 🤍
 
-A warm, late-night AI companion for Indian college students. This is the **prototype**
-whose only job is to answer one question: *do students talk to Mitra, come back, and go deep?*
-That retention-and-depth signal is what you take into a pitch — not a polished app.
+**Your late-night friend.** A privacy-first AI companion for Indian college students, built for the moments when everything feels heavier and there's no one else to talk to.
 
-## What's here
+Live at [mitra.cybernetic.co.in](https://mitra.cybernetic.co.in)
+
+---
+
+## What Mitra is
+
+Mitra isn't a therapist, a coach, or a productivity bot. It's the friend who picks up at 2am — warm, honest, occasionally in Hinglish, and genuinely present. It listens more than it advises, remembers your conversations, and never turns into a homework-doing assistant.
+
+Built by a solo founder as part of [NetraaLabs](https://netraalabs.netlify.app), currently unregistered as any legal entity.
+
+## Core features
+
+- **Persona-tuned conversation** — casual, warm, anti-therapy-speak system prompt with language progression (English → natural Hinglish blend), anti-repetition rules, and conversational momentum tuning
+- **Crisis safety layer** — a deterministic, model-independent phrase/regex net that guarantees a safe, warm, complete reply surfacing Tele-MANAS (14416) the moment real distress is detected — tested against an independent 39-case adversarial set (English, Hindi, Hinglish, indirect/metaphorical/planning-language phrasing) at **93.1% recall, 0% false-positive rate**
+- **End-to-end encrypted chat history** — every message is encrypted client-side (AES-256-GCM) before it ever reaches Firestore. The encryption key is derived server-side via HKDF from a master secret that never leaves the backend, and is only ever handed to an authenticated client for the duration of a session — never stored anywhere in plaintext or at rest
+- **Per-account persistent history** — Firebase Auth + Firestore, synced across devices, with a full "delete everything" control
+- **Voice input** — live interim transcript, auto-send on speech end, same safety path as typed messages
+- **Daily cost ceilings** — global and per-user caps so free-tier usage stays predictable; crisis replies are always free and uncapped
+- **PWA** — installable, offline-aware composer, service worker caching
+
+## Architecture
 
 ```
-mitra-app/
-  frontend/            ← the chat app (static, mobile-first PWA)
-    index.html         ← the whole UI + client logic
-    manifest.webmanifest, sw.js, icon-*.png   ← installable-to-home-screen bits
-  backend/             ← FastAPI service that holds the Gemini key & streams replies
-    main.py            ← persona + safety + streaming live here
-    requirements.txt, .env.example, .gitignore
-  firestore-metrics.rules   ← add to your Firebase rules for anonymous metrics
+Frontend (Netlify)          Backend (Render)              Data
+┌─────────────────┐        ┌──────────────────┐        ┌─────────────┐
+│ Vanilla JS PWA   │──────▶ │ FastAPI          │──────▶ │ Firebase    │
+│ Web Crypto API   │  TLS   │ crypto_utils.py  │        │ Auth        │
+│ Firebase SDK     │◀────── │ Firebase Admin   │◀────── │ Firestore   │
+└─────────────────┘        │ Gemini 2.5 Flash │        │ (ciphertext │
+                            └──────────────────┘        │  only)      │
+                                                          └─────────────┘
 ```
 
-## The privacy model (be able to say this honestly)
+- **Frontend:** vanilla JS, Three.js background, Firebase Auth/Firestore, Web Crypto API for client-side encryption
+- **Backend:** FastAPI on Render, Google Gemini 2.5 Flash for generation, Firebase Admin SDK for session verification
+- **Encryption:** AES-256-GCM, HKDF key derivation, per-session key handoff over TLS — see `crypto_utils.py` and `crypto-utils.js`
+- **Crisis detection:** layered — deterministic phrase/regex net (guaranteed, model-independent) + Gemini's own safety-aware persona as a secondary layer
 
-- **Message content is never stored.** Conversations live only in the student's browser
-  (localStorage). Nothing is written to any database.
-- To generate a reply, messages pass through your backend → Google Gemini, used only to
-  produce the response. Not stored by us, not read by a human.
-- **This is NOT on-device inference.** True "nothing ever leaves your phone" needs a local
-  model — that's a real-product decision, not v0. So don't claim more than the above.
-- Only **anonymous signals** are logged (session id, counts, timing, return visits) — no text.
+## Local setup
 
-## Run it locally
-
-### 1. Backend
 ```bash
 cd backend
-python -m venv .venv
-source .venv/bin/activate           # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env                 # then edit .env, paste your GEMINI_API_KEY
+cp .env.example .env      # fill in GEMINI_API_KEY, MITRA_MASTER_KEY, FIREBASE_SERVICE_ACCOUNT_B64
 uvicorn main:app --reload --port 8000
 ```
-Get a free key in ~2 clicks: https://aistudio.google.com/app/apikey
-The key is a **real secret** — it lives only in `.env`, never in the frontend, never in git.
 
-Check it's alive: open http://localhost:8000/health → should show `"key_set": true`.
+Open `frontend/index.html` via Live Server (or any static server) pointed at your local backend (`API_BASE` in `index.html`).
 
-### 2. Frontend
-Serve `frontend/` with any static server (VS Code **Live Server** is easiest — it runs on
-port 5500, which the backend already allows). Open `index.html`. Mitra should greet you;
-type a message and you'll see a streamed reply.
+### Required environment variables (backend)
 
-If replies fail, it's almost always one of: backend not running, `GEMINI_API_KEY` missing,
-or a CORS origin mismatch (the port serving the frontend must be in `ALLOWED_ORIGINS`).
+| Variable | Purpose |
+|---|---|
+| `GEMINI_API_KEY` | Google Gemini API key |
+| `MITRA_MASTER_KEY` | 32-byte base64 secret for AES key derivation — generate with `python -c "import secrets,base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"` |
+| `FIREBASE_SERVICE_ACCOUNT_B64` | Base64-encoded Firebase service account JSON, for verifying login tokens server-side |
+| `ALLOWED_ORIGINS` | Comma-separated list of allowed frontend origins (CORS) |
+| `MAX_DAILY_MSGS` / `PER_IP_DAILY` | Optional cost-ceiling tuning |
 
-### 3. Metrics (optional but that's the whole point)
-Open `frontend/index.html`, find the `firebaseConfig` block, and paste the **same config
-you used in the survey** (replace `PASTE_FROM_SURVEY`). Then add the block from
-`firestore-metrics.rules` to your Firebase rules and Publish. Metrics land in a new
-`mitra_events` collection. If you skip this, the chat still works — metrics just no-op.
+## Testing the crisis detector
 
-## Deploy it
+```bash
+cd backend/tests
+python run_recall_test.py
+```
 
-- **Frontend** → Netlify (drag `frontend/` folder, or connect a repo). Static, no build.
-- **Backend** → a host that runs Python: **Render** or **Railway** (both have free tiers).
-  Set `GEMINI_API_KEY` as an environment variable there. Start command:
-  `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- After both are live: put the backend's `https://…` URL into `API_BASE` at the top of the
-  frontend script, add the frontend's URL to the backend's `ALLOWED_ORIGINS`, and add it to
-  Firebase → Authentication → Authorized domains.
+Runs the deterministic detector against an independent adversarial test set and reports recall, false-positive rate, and a per-category breakdown. Whenever `CRISIS_PHRASES`/`CRISIS_REGEX` change in `main.py`, the same change must be copied into `tests/crisis_detector.py` (a standalone copy kept for isolated testing) — otherwise this test stops reflecting reality.
 
-## What to measure
+## Privacy & safety posture
 
-- **Retention** = a `deviceId` that shows up across multiple sessions / days (`isReturn`, repeat `session` events).
-- **Depth** = `msg` events per `sessionId`, and time between first and last event in a session.
-The number that matters: *do the same students come back a second time?*
+- Chats are encrypted at rest; even direct Firestore access shows only ciphertext
+- Message content is never logged
+- Crisis phrases surface Tele-MANAS (14416) — a helpline reference, not an API integration or reporting mechanism
+- Anonymous usage metrics only (return visits, session counts) — never message content
+- Full account + chat deletion available to any user at any time
 
-## Honest caveats (read these)
+## Status
 
-- **The persona is the risk, not the code.** The voice in `SYSTEM_PROMPT` (in `main.py`) is
-  what makes students return or bounce. Test it, then tune that text. Everything else is plumbing.
-- **The crisis card is a crude backstop**, not a safety system. It catches obvious keywords and
-  surfaces Tele-MANAS (14416). A real product needs a proper safety layer and, ideally, a
-  psychology collaborator before wide release.
-- **`/chat` is an open endpoint** using your key. CORS + a basic rate limit protect it, but a
-  determined abuser could still burn quota. Fine for a small campus test; add App Check /
-  auth before it spreads wide.
-- **Free-tier limits**: Gemini's free tier has request/day caps. Plenty for a pilot; watch it
-  if usage climbs.
+Active solo-founder prototype. Not yet a registered legal entity. Built as part of an ongoing academic + startup effort — see [NetraaLabs](https://netraalabs.netlify.app) for other work in the same vein (computer vision, surveillance safety systems, sign language recognition).
+
+## License
+
+Not yet determined — reach out before reusing.

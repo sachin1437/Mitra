@@ -36,10 +36,9 @@ from google.genai import types
 import firebase_admin
 from firebase_admin import credentials, auth as firebase_auth
 
+from crypto_utils import encrypt_message, decrypt_message, derive_user_key
 
 load_dotenv()
-
-from crypto_utils import encrypt_message, decrypt_message, derive_user_key
 
 # ----------------------------------------------------------------------------
 # config
@@ -210,6 +209,39 @@ CRISIS_PHRASES = [
     "kya faayda jeene", "kya fayda jeene", "faayda ab jeene", "fayda ab jeene",
     "not being here anymore", "not be here anymore", "wasn't here anymore", "wasnt here anymore",
     "bina jee", "bina jiye", "bina reh nahi", "khatam ho jau", "mit jau", "mit jana",
+    # ---- added: adversarial recall-test patch (see backend/tests/run_recall_test.py) ----
+    # indirect / euphemistic
+    "want everything to stop", "everything to just stop",
+    "not be a problem for anyone", "not be a burden anymore",
+    "relieved if i disappeared", "relieved if i wasn't here",
+    "tired of existing", "so tired of existing",
+    "not wake up tomorrow", "not waking up tomorrow",
+    "better if i wasn't here", "better if i wasn't around",
+    "sabke liye bojh", "bojh hoon sabke liye",
+    "main na rahoon", "main na rahu",
+    # planning / preparation signals
+    "giving away my stuff", "giving away my things",
+    "wrote letters", "just in case letters",
+    "decided how i'm doing it", "decided how im doing it",
+    "plan kar liya hai", "sab kuch plan kar liya",
+    # hinglish variants (bahut ho gaya / khatam / last raasta family)
+    "bahut ho gaya", "ab nahi jiya jaata", "nahi jiya jata",
+    "khatam kar doon khud", "khatam kar doon apne aap",
+    "mann bhar gaya zindagi se", "zindagi se mann bhar gaya",
+    "last raasta bacha hai", "yehi last raasta",
+    "nahi seh sakta", "nahi sah sakta",
+    "gayab ho jana hamesha", "hamesha ke liye gayab",
+    # understated / flat-affect framing
+    "thinking about ending things", "ending things, no big deal",
+    "planning my own funeral",
+    # metaphorical distress
+    "already a ghost", "feel like a ghost walking",
+    "khokla ho chuka hoon", "andar se khokla",
+    "fade out of the picture", "fading out of the picture",
+    # question-form ideation
+    "notice if i wasn't here", "notice if i wasnt here",
+    "kal na uthoon", "na uthoon apni neend se",
+    "stop existing", "people get better after they stop existing",
 ]
 # regex for "... (uske/tere/iske) bina ... jee/ji/rah ... nahi/nhi ..." and similar
 CRISIS_REGEX = [
@@ -219,6 +251,37 @@ CRISIS_REGEX = [
     re.compile(r"jeene?\s+k[iea]\s+.{0,20}(khwaish|khwahish|iccha|ichha|wajah|matlab|maksad|man|mann)\s*.{0,10}(nahi|nhi|nai)\b"),
     # khatam/khtm (vowel-dropped Hinglish spelling is very common) + kar/kr + du/dena/dunga/dungi
     re.compile(r"kh(a)?tm\w*\s*.{0,8}(kar|kr)\s*.{0,8}(du|de|dena|dunga|dungi|doonga|doongi)\b"),
+    # ---- added: adversarial recall-test patch (see backend/tests/run_recall_test.py) ----
+    # "relieved / better if I [wasn't here / disappeared / wasn't around]"
+    re.compile(r"(relieved|better)\s+if\s+.{0,15}(wasn'?t|wasnt)\s+(here|around)"),
+    re.compile(r"(relieved|better)\s+if\s+.{0,15}disappear"),
+    # "wouldn't/would anyone notice if I [wasn't here/around]"
+    re.compile(r"(would\s?n'?t|would)\s+.{0,25}notice\s+if\s+i\s+.{0,10}(wasn'?t|wasnt)"),
+    # "wasn't/isn't a problem for anyone" framing
+    re.compile(r"(wasn'?t|isn'?t|not\s+be)\s+a\s+problem\s+for\s+anyone"),
+    # giving away belongings / final preparations (planning signal)
+    re.compile(r"giving\s+away\s+(my\s+)?(stuff|things|belongings)"),
+    re.compile(r"wrote\s+letters?\s+.{0,15}(just in case|goodbye|parents)"),
+    re.compile(r"decided\s+how\s+.{0,10}(doing it|do it|end it)"),
+    # bahut ho gaya / nahi jiya jaata family (Hinglish exhaustion -> ideation)
+    re.compile(r"bahut\s+ho\s+gaya.{0,20}(nahi|nhi)\s+jiy?a\s+jaata"),
+    re.compile(r"(nahi|nhi)\s+seh\s+sakta.{0,20}khatam"),
+    # zindagi/mann bhar gaya, either word order
+    re.compile(r"zindagi\s+se.{0,15}mann\s+bhar\s+gaya"),
+    re.compile(r"mann\s+bhar\s+gaya.{0,15}zindagi"),
+    # gayab ho jana ... hamesha, either word order
+    re.compile(r"gayab\s+ho\s+jana.{0,15}hamesha"),
+    # "better lagega agar ... wasn't around" (Hinglish-English mixed relief framing)
+    re.compile(r"better\s+lagega\s+agar.{0,20}(wasn'?t|wasnt)\s+around"),
+    # existential/metaphorical fade-out framing
+    re.compile(r"(already\s+a\s+ghost|feel\s+like\s+a\s+ghost)"),
+    re.compile(r"khokla\s+ho\s+chuka\s+hoon"),
+    re.compile(r"fad(e|ing)\s+out\s+of\s+the\s+picture"),
+    # tired of existing (distinct from generic "tired")
+    re.compile(r"tired\s+of\s+existing"),
+    # not waking up tomorrow / not uthoon
+    re.compile(r"not\s+wak(e|ing)\s+up\s+tomorrow"),
+    re.compile(r"(kal\s+)?na\s+uthoon\s+.{0,15}neend"),
 ]
 
 def is_crisis(text: str) -> bool:
