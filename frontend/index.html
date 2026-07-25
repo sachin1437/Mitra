@@ -36,21 +36,14 @@
     -webkit-font-smoothing:antialiased;
     position:fixed; inset:0; overflow:hidden; overscroll-behavior:none;
   }
-  /* soft vignette above the background layers keeps text effortlessly readable */
   body::after{
     content:""; position:fixed; inset:0; z-index:1; pointer-events:none;
     background:radial-gradient(120% 100% at 50% 42%, transparent 45%, rgba(10,5,7,.55) 100%);
   }
-
-  /* ---------- background layers (strictly decorative, never interactive) ---------- */
-  #space, #space3d{
-    position:fixed; inset:0; z-index:0; pointer-events:none;
-  }
+  #space, #space3d{ position:fixed; inset:0; z-index:0; pointer-events:none; }
   #space{ opacity:.9; }
   #space3d{ opacity:0; transition:opacity 1.4s var(--ease); }
   #space3d.on{ opacity:.95; }
-
-  /* ---------- the living light (2D lamp — kept as the always-on anchor) ---------- */
   #glow{
     position:fixed; left:50%; top:16%; width:min(88vw,520px); aspect-ratio:1;
     transform:translate(-50%,-50%) scale(1); border-radius:50%;
@@ -74,12 +67,8 @@
   @keyframes lamprot{ to{ transform:rotate(360deg); } }
   @keyframes breathe{ 0%,100%{ transform:translate(-50%,-50%) scale(1);} 50%{ transform:translate(-50%,-50%) scale(1.07);} }
   #glow.thinking{ animation:breathe 2.4s var(--ease) infinite; }
-
-  /* ---------- shell ---------- */
   #app{ position:relative; z-index:2; height:100%; display:flex; flex-direction:column; max-width:640px; margin:0 auto; }
   #app[hidden]{ display:none; }
-
-  /* ---------- auth screen ---------- */
   #authscreen{
     position:relative; z-index:5; height:100%; display:flex; align-items:center; justify-content:center;
     padding:24px; padding-bottom:calc(24px + env(safe-area-inset-bottom));
@@ -125,8 +114,6 @@
     transition:background .2s var(--ease), color .2s;
   }
   #logout-btn:hover{ background:rgba(232,155,168,.14); color:var(--rose); }
-
-  /* primary warm CTA button (login/signup + reusable anywhere a full-width primary action is needed) */
   .cta{
     appearance:none; border:none; cursor:pointer; width:100%;
     display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
@@ -139,7 +126,6 @@
   .cta:hover{ transform:translateY(-1px); box-shadow:0 14px 36px -12px rgba(255,176,102,.75); }
   .cta:active{ transform:translateY(0) scale(.98); }
   .cta:disabled{ opacity:.5; cursor:default; transform:none; box-shadow:none; }
-
   header{
     display:flex; align-items:center; gap:.6rem;
     padding:calc(env(safe-area-inset-top) + 14px) 20px 12px;
@@ -161,15 +147,12 @@
     transition:color .2s, border-color .2s, background .2s; margin-right:.5rem;
     backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
   #chatlist-btn:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
-
-  /* ---------- thread ---------- */
   #thread{
     flex:1; overflow-y:auto; padding:8px 18px 8px;
     display:flex; flex-direction:column; gap:14px;
     scroll-behavior:smooth;
   }
   #thread::-webkit-scrollbar{ width:0; }
-
   .msg{ max-width:82%; line-height:1.5; font-size:1.02rem; padding:.72rem .95rem; border-radius:18px; opacity:0; transform:translateY(10px) scale(.98); animation:pop .45s var(--ease) forwards; white-space:pre-wrap; word-wrap:break-word; }
   @keyframes pop{ to{ opacity:1; transform:none; } }
   .msg.mitra{
@@ -186,8 +169,6 @@
     backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
     box-shadow:0 12px 32px -18px rgba(255,150,90,.35);
   }
-
-  /* typing dots */
   .typing{ align-self:flex-start; display:flex; gap:5px; padding:.9rem 1rem;
     background:linear-gradient(165deg, rgba(255,240,228,.075), rgba(255,240,228,.035));
     border:1px solid var(--line); border-radius:18px; border-bottom-left-radius:6px;
@@ -195,16 +176,12 @@
   .typing i{ width:7px; height:7px; border-radius:50%; background:var(--ember); opacity:.5; animation:blink 1.3s var(--ease) infinite; }
   .typing i:nth-child(2){ animation-delay:.18s; } .typing i:nth-child(3){ animation-delay:.36s; }
   @keyframes blink{ 0%,100%{ opacity:.35; transform:translateY(0);} 50%{ opacity:1; transform:translateY(-3px);} }
-
-  /* crisis / support card */
   .support{ align-self:stretch; margin:2px 0; padding:1rem 1.1rem; border-radius:16px; border:1px solid var(--line-warm);
     background:linear-gradient(180deg, rgba(255,176,102,.12), rgba(255,176,102,.05)); color:var(--text); font-size:.94rem; line-height:1.55;
     backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
     box-shadow:0 14px 40px -20px rgba(255,150,90,.4); }
   .support b{ color:var(--ember-core); font-weight:600; }
   .support .tele{ display:inline-block; margin-top:.5rem; font-family:"Fraunces",serif; font-style:italic; font-size:1.15rem; color:var(--ember-core); }
-
-  /* ---------- composer ---------- */
   #composer{
     padding:10px 16px calc(env(safe-area-inset-bottom) + 14px);
     display:flex; gap:10px; align-items:flex-end;
@@ -227,7 +204,6 @@
     transition:transform .2s var(--ease), opacity .2s var(--ease);
   }
   #send:active{ transform:scale(.92); }
-
   #mic{
     flex:0 0 auto; width:46px; height:46px; border-radius:50%; cursor:pointer;
     background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
@@ -252,8 +228,6 @@
     50%{ box-shadow:0 0 0 9px rgba(255,176,102,0); }
   }
   #send:disabled{ opacity:.4; box-shadow:none; cursor:default; }
-
-  /* ---------- privacy sheet ---------- */
   #sheet-bg{ position:fixed; inset:0; z-index:20; background:rgba(10,6,8,.6); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
   #chatsheet-bg{ position:fixed; inset:0; z-index:20; background:rgba(10,6,8,.6); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
   #chatsheet-bg.open{ opacity:1; pointer-events:auto; }
@@ -282,8 +256,6 @@
   .chatrow-date{ color:var(--faint); font-size:.76rem; margin-top:.15rem; }
   .chatrow-del{ appearance:none; background:none; border:none; color:var(--faint); cursor:pointer; padding:.35rem; border-radius:8px; flex:0 0 auto; transition:color .2s; }
   .chatrow-del:hover{ color:var(--rose); }
-
-  /* ---------- feedback sheet ---------- */
   #feedbacksheet-bg{ position:fixed; inset:0; z-index:22; background:rgba(10,6,8,.6); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
   #feedbacksheet-bg.open{ opacity:1; pointer-events:auto; }
   #feedbacksheet{
@@ -300,7 +272,6 @@
   .fb-sub{ color:var(--muted); font-size:.88rem; line-height:1.5; margin-bottom:.9rem; }
   .fb-textarea{ resize:none; margin-bottom:.7rem; }
   #feedback-status{ font-size:.86rem; color:var(--ember-core); margin-bottom:.7rem; }
-
   #sheet-bg.open{ opacity:1; pointer-events:auto; }
   #sheet{
     position:fixed; left:0; right:0; bottom:0; z-index:21; max-width:640px; margin:0 auto;
@@ -316,7 +287,6 @@
   #sheet p{ color:var(--muted); font-size:.92rem; line-height:1.6; margin-bottom:.7rem; }
   #sheet p b{ color:var(--text); font-weight:600; }
   #sheet .close{ margin-top:.6rem; appearance:none; border:1px solid var(--line); background:none; color:var(--muted); font-family:inherit; font-size:.95rem; padding:.7rem 1.3rem; border-radius:100px; cursor:pointer; }
-
   @media (prefers-reduced-motion: reduce){
     *{ animation:none !important; }
     #space, #space3d{ display:none; }
@@ -329,20 +299,15 @@
   <canvas id="space3d" aria-hidden="true"></canvas>
   <div id="glow" aria-hidden="true"></div>
 
-  <!-- auth screen: shown until signed in -->
   <div id="authscreen">
     <div id="authbox">
       <div class="brand" style="justify-content:center; margin-bottom:.3rem;"><span class="bdot"></span>Mitra</div>
       <p id="auth-sub">your late-night friend</p>
       <p id="auth-welcome">Sign in, and I'll remember you next time & your chats will be right where you left them.</p>
-
       <div id="auth-error" class="auth-error" hidden></div>
-
       <input id="auth-email" class="auth-input" type="email" autocomplete="email" placeholder="email" />
       <input id="auth-password" class="auth-input" type="password" autocomplete="current-password" placeholder="password" />
-
       <button id="auth-submit" class="cta">log in</button>
-
       <div class="auth-links">
         <button id="auth-toggle" class="linkbtn">new here? sign up</button>
         <button id="auth-forgot" class="linkbtn">forgot password?</button>
@@ -359,9 +324,7 @@
       <span class="brand-sub">your late-night friend</span>
       <button id="info" aria-label="How this works">i</button>
     </header>
-
     <div id="thread" aria-live="polite"></div>
-
     <div id="composer">
       <textarea id="box" rows="1" placeholder="type whatever's on your mind..." maxlength="1500"></textarea>
       <button id="mic" aria-label="Speak instead of typing" hidden>
@@ -381,7 +344,6 @@
     </div>
   </div>
 
-  <!-- privacy sheet -->
   <div id="sheet-bg"></div>
   <div id="sheet">
     <h3>just so you know 🌙</h3>
@@ -395,7 +357,6 @@
     <button class="linkbtn" id="logout-btn" style="display:block; margin:.5rem auto 0;">log out</button>
   </div>
 
-  <!-- chats sheet -->
   <div id="chatsheet-bg"></div>
   <div id="chatsheet">
     <div class="chatlist-head">
@@ -406,7 +367,6 @@
     <button class="close" id="chatsheet-close">close</button>
   </div>
 
-  <!-- feedback sheet -->
   <div id="feedbacksheet-bg"></div>
   <div id="feedbacksheet">
     <h3>tell us something 💛</h3>
@@ -417,25 +377,11 @@
     <button class="close" id="feedbacksheet-close">close</button>
   </div>
 
-<!-- ============================================================
-     BACKGROUND MANAGER — strictly decorative, fully isolated.
-     Order of operations:
-       1) 2D ember canvas starts instantly (cheap, proven).
-       2) After window load + idle, Three.js is lazy-loaded from CDN.
-       3) 3D scene runs an FPS probe; only if it passes does it fade
-          in over the 2D layer (which is then stopped).
-       4) ANY failure — no WebGL, low-end device heuristic, library
-          fails to load, context lost, probe fails — leaves the 2D
-          layer running. The chat never depends on any of this.
-     Touches zero app state. pointer-events:none on both canvases.
-     ============================================================ -->
 <script>
 (function(){
   "use strict";
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduced) return;   // static gradient background only — no animated layers at all
-
-  // ---- shared color source: read the EXACT values from CSS custom properties ----
+  if (reduced) return;
   var css = getComputedStyle(document.documentElement);
   function cvar(name, fallback){ var v = css.getPropertyValue(name).trim(); return v || fallback; }
   var COLORS = {
@@ -449,10 +395,6 @@
     var h = hex.replace("#","");
     return { r: parseInt(h.substr(0,2),16), g: parseInt(h.substr(2,2),16), b: parseInt(h.substr(4,2),16) };
   }
-
-  // ============================================================
-  // LAYER A — 2D ember field (instant, the permanent fallback)
-  // ============================================================
   function init2D(canvas){
     var ctx = canvas.getContext("2d");
     function makeSprite(hex){
@@ -470,7 +412,6 @@
     var DPR = Math.min(window.devicePixelRatio || 1, 1.5);
     var FOV = 320, DEPTH = 900;
     var W=0, H=0, CX=0, CY=0, particles = [];
-
     function newParticle(){
       return {
         x:(Math.random()*2-1)*W*.7, y:(Math.random()*2-1)*H*.7, z:Math.random()*DEPTH,
@@ -488,7 +429,6 @@
       var count = Math.min(90, Math.floor(innerWidth*innerHeight/14000));
       particles = []; for (var i=0;i<count;i++) particles.push(newParticle());
     }
-
     var running = false, raf = 0;
     function loop(){
       if (!running) return;
@@ -510,7 +450,6 @@
       ctx.globalAlpha = 1;
     }
     function onVis(){ if (document.hidden){ cancelAnimationFrame(raf); } else if (running){ loop(); } }
-
     return {
       start: function(){
         if (running) return;
@@ -531,15 +470,10 @@
       }
     };
   }
-
   var canvas2d = document.getElementById("space");
   var canvas3d = document.getElementById("space3d");
   var bg2d = init2D(canvas2d);
-  bg2d.start();   // instant: the page is never blank, and this never blocks the chat
-
-  // ============================================================
-  // capability gate — cheap checks BEFORE spending bytes on Three.js
-  // ============================================================
+  bg2d.start();
   function webglSupported(){
     try {
       var c = document.createElement("canvas");
@@ -550,11 +484,7 @@
     (navigator.deviceMemory && navigator.deviceMemory <= 2) ||
     (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) ||
     (navigator.connection && /(^|-)2g/.test(navigator.connection.effectiveType || ""));
-  if (!webglSupported() || looksLowEnd) return;   // 2D stays — done
-
-  // ============================================================
-  // lazy-load Three.js: after window load, then idle, never blocking
-  // ============================================================
+  if (!webglSupported() || looksLowEnd) return;
   function loadThree(){
     return new Promise(function(resolve, reject){
       if (window.THREE) return resolve();
@@ -575,40 +505,29 @@
     if (document.readyState === "complete") whenIdle(cb);
     else addEventListener("load", function(){ whenIdle(cb); }, { once:true });
   }
-
   afterLoad(function(){
-    loadThree().then(init3D).catch(function(){ /* 2D stays, silently */ });
+    loadThree().then(init3D).catch(function(){});
   });
-
-  // ============================================================
-  // LAYER B — Three.js scene: volumetric orb + rising embers + starfield
-  // ============================================================
   function init3D(){
     var THREE = window.THREE;
     var renderer, scene, camera, disposed = false;
-
     try {
       renderer = new THREE.WebGLRenderer({
         canvas: canvas3d, alpha: true, antialias: false, powerPreference: "low-power"
       });
-    } catch(e){ return; }   // context refused — 2D stays
-
+    } catch(e){ return; }
     var DPR = Math.min(window.devicePixelRatio || 1, 1.5);
     renderer.setPixelRatio(DPR);
     renderer.setClearColor(0x000000, 0);
-
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, .1, 120);
     camera.position.set(0, 2, 18);
-
     function sizeIt(){
       renderer.setSize(innerWidth, innerHeight, false);
       camera.aspect = innerWidth/innerHeight;
       camera.updateProjectionMatrix();
     }
     sizeIt();
-
-    // ---- soft radial glow texture, tinted per color (shared helper) ----
     function glowTexture(hex, innerStop){
       var c = hexToRgb(hex);
       var cnv = document.createElement("canvas"); cnv.width = cnv.height = 128;
@@ -622,9 +541,6 @@
       tex.needsUpdate = true;
       return tex;
     }
-
-    // ---- 1) volumetric orb: stacked additive sprites (soft, no geometry edges) ----
-    // Sits where the CSS lamp lives (upper center), breathing on the same 6.5s period.
     var orb = new THREE.Group();
     var orbLayers = [
       { tex: glowTexture(COLORS.emberCore, .18), scale: 5.5, op: .55 },
@@ -643,8 +559,6 @@
     });
     orb.position.set(0, 5.2, -6);
     scene.add(orb);
-
-    // ---- 2) rising embers: THREE.Points, conservative counts, two warm tints ----
     function makeEmbers(count, hex, size, spread){
       var geo = new THREE.BufferGeometry();
       var pos = new Float32Array(count*3);
@@ -655,7 +569,7 @@
         var z = -2 - Math.random()*spread.z;
         pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=z;
         data.push({
-          v: .28 + Math.random()*.5,                 // upward speed
+          v: .28 + Math.random()*.5,
           sway: Math.random()*Math.PI*2,
           swaySpeed: .18 + Math.random()*.3,
           baseX: x
@@ -671,11 +585,8 @@
       scene.add(pts);
       return pts;
     }
-    // deliberately conservative: 60 + 40 embers total
     var embersA = makeEmbers(60, COLORS.ember,     .45, { x: 14, z: 16 });
     var embersB = makeEmbers(40, COLORS.emberDeep, .6,  { x: 16, z: 24 });
-
-    // ---- 3) starfield: two depth shells of tiny faint points ----
     function makeStars(count, hex, size, minZ, maxZ, opacity){
       var geo = new THREE.BufferGeometry();
       var pos = new Float32Array(count*3);
@@ -693,21 +604,14 @@
       scene.add(pts);
       return pts;
     }
-    // conservative: 220 stars total, split across two depth shells for parallax
     var starsNear = makeStars(90,  COLORS.text, .28, 18, 32, .35);
     var starsFar  = makeStars(130, COLORS.text, .2,  32, 60, .25);
-
-    // ---- animation: slow drift only — no input, nothing to "play with" ----
     var clock = new THREE.Clock();
     var running = true, raf = 0;
-
-    // FPS probe: skip the first second (JIT/texture upload), then measure.
     var probeFrames = 0, probeTime = 0, probeSkip = 60, probeDone = false;
-    var PROBE_SAMPLE = 180;       // ~3s at 60fps
+    var PROBE_SAMPLE = 180;
     var MIN_FPS = 28;
-
     var twoDStopped = false;
-
     function teardown(){
       if (disposed) return;
       disposed = true; running = false;
@@ -718,16 +622,10 @@
         if (o.geometry) o.geometry.dispose();
       });
       renderer.dispose();
-      // If the 2D layer was already retired (late failure, e.g. context lost
-      // after promotion), bring it back so the background never goes blank.
       if (twoDStopped) bg2d.start();
-      // Otherwise 2D is still running — nothing else to do.
     }
-
     canvas3d.addEventListener("webglcontextlost", function(e){ e.preventDefault(); teardown(); }, false);
-
     function promote(){
-      // probe passed: fade 3D in, then retire the 2D layer
       canvas3d.classList.add("on");
       setTimeout(function(){
         if (disposed) return;
@@ -735,21 +633,17 @@
         twoDStopped = true;
       }, 1500);
     }
-
     function onVis(){
       if (document.hidden){ running = false; cancelAnimationFrame(raf); }
       else if (!disposed){ running = true; clock.getDelta(); loop(); }
     }
     document.addEventListener("visibilitychange", onVis);
     addEventListener("resize", sizeIt, { passive:true });
-
     function loop(){
       if (!running || disposed) return;
       raf = requestAnimationFrame(loop);
       var dt = Math.min(clock.getDelta(), .05);
       var t = clock.elapsedTime;
-
-      // FPS probe
       if (!probeDone){
         if (probeSkip > 0){ probeSkip--; }
         else {
@@ -762,15 +656,11 @@
           }
         }
       }
-
-      // orb breathing — same 6.5s period as the CSS lamp
       var breathe = 1 + .07 * Math.sin(t * (Math.PI*2/6.5));
       for (var i=0;i<orbSprites.length;i++){
         var sp = orbSprites[i];
         sp.scale.set(sp.userData.base*breathe, sp.userData.base*breathe, 1);
       }
-
-      // embers rising with sway
       [embersA, embersB].forEach(function(sys){
         var posAttr = sys.geometry.getAttribute("position");
         var arr = posAttr.array, data = sys.userData.data;
@@ -787,16 +677,11 @@
         }
         posAttr.needsUpdate = true;
       });
-
-      // near-imperceptible camera drift (Lissajous), always looking at the orb
       camera.position.x = Math.sin(t*.05)*.55;
       camera.position.y = 2 + Math.cos(t*.037)*.35;
       camera.lookAt(0, 4.2, -6);
-
-      // starfield twinkle via whole-layer opacity sway (cheap, no per-star work)
       starsNear.material.opacity = .3 + .08*Math.sin(t*.7);
       starsFar.material.opacity  = .22 + .05*Math.sin(t*.53 + 1.7);
-
       renderer.render(scene, camera);
     }
     loop();
@@ -804,7 +689,6 @@
 })();
 </script>
 
-<!-- ===== auth-card tilt (UI micro-interaction, separate from the background) ===== -->
 <script>
 (function(){
   "use strict";
@@ -823,9 +707,7 @@
 })();
 </script>
 
-<!-- ===== Firebase (anonymous metrics only — no message content) ===== -->
 <script type="module">
-  // Paste the SAME firebaseConfig you used in the survey.
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
   import { getFirestore, collection, addDoc, doc, setDoc, getDocs, deleteDoc, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
@@ -843,20 +725,18 @@
     appId: "1:1095624201719:web:f6bbec13ca14fdf4194af2"
   };
 
-  window.__mitraEvent = function(){};  // default no-op until Firebase is configured
+  window.__mitraEvent = function(){};
   if (!String(firebaseConfig.apiKey).includes("PASTE")) {
     try {
       const app = initializeApp(firebaseConfig);
       const db  = getFirestore(app);
-      const auth = getAuth(app);   // web SDK persists the session across browser restarts by default
+      const auth = getAuth(app);
 
-      // ---- anonymous behavioral metrics (unchanged) ----
       window.__mitraEvent = async function(payload){
         try { await addDoc(collection(db, "mitra_events"), Object.assign({}, payload, { _ts: serverTimestamp() })); }
-        catch(e){ /* metrics must never break the chat */ }
+        catch(e){ }
       };
 
-      // ---- friendly error messages for Firebase Auth error codes ----
       function friendly(err){
         const c = (err && err.code) || "";
         const map = {
@@ -871,7 +751,6 @@
         return map[c] || "Something went wrong. Try again?";
       }
 
-      // ---- auth bridge ----
       window.__mitraOnAuthChange = function(cb){ onAuthStateChanged(auth, (user) => cb(user ? { uid: user.uid, email: user.email } : null)); };
       window.__mitraSignUp = async function(email, password){
         try { const cred = await createUserWithEmailAndPassword(auth, email, password); return { ok:true, uid: cred.user.uid }; }
@@ -882,12 +761,16 @@
         catch(e){ return { ok:false, error: friendly(e) }; }
       };
       window.__mitraLogOut = async function(){ try { await signOut(auth); return { ok:true }; } catch(e){ return { ok:false, error: friendly(e) }; } };
+      window.__mitraGetIdToken = async function(){
+        const user = auth.currentUser;
+        if (!user) return null;
+        try { return await user.getIdToken(); } catch(e){ return null; }
+      };
       window.__mitraResetPassword = async function(email){
         try { await sendPasswordResetEmail(auth, email); return { ok:true }; }
         catch(e){ return { ok:false, error: friendly(e) }; }
       };
 
-      // ---- per-user chat storage: users/{uid}/chats/{chatId} ----
       window.__mitraLoadChats = async function(uid){
         try {
           const snap = await getDocs(collection(db, "users", uid, "chats"));
@@ -905,7 +788,6 @@
         catch(e){ console.error("Mitra: deleteChat failed", e); return false; }
       };
 
-      // ---- feedback / suggestions (write-only; you read it via the Firebase console) ----
       window.__mitraSendFeedback = async function(uid, text){
         try {
           await addDoc(collection(db, "feedback"), { uid: uid || null, text, createdAt: serverTimestamp() });
@@ -916,35 +798,49 @@
   }
 </script>
 
-<script>
+<script type="module">
+import { fetchSessionKey, encryptMessage, decryptMessage } from "./crypto-utils.js";
 (function(){
   "use strict";
 
-  // ====================== config ======================
-  // Point this at your backend. Local: http://localhost:8000
-  // After you deploy the backend (Render/Railway), put that https URL here.
   const API_BASE = "https://mitra-chat-backend.onrender.com";
-
-  // Wake the Render dyno immediately — free tier spins down after idle and takes
-  // 30-60s to boot. By the time the user types their first message, it's warm.
   fetch(API_BASE + "/health").catch(()=>{});
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // ====================== elements ======================
   const thread = document.getElementById("thread");
   const box    = document.getElementById("box");
   const mic    = document.getElementById("mic");
   const send   = document.getElementById("send");
   const glow   = document.getElementById("glow");
 
-  // ====================== state (per-account, Firestore-backed) ======================
   let currentUid = null;
+  let sessionKey = null;
   let chats = {};
   let activeId = null;
-  let messages = [];    // live reference into the active chat's messages array
+  let messages = [];
   let busy = false;
   let sessionMsgs = 0;
+
+  async function encryptMessages(msgs){
+    if (!sessionKey) { console.warn("Mitra: no session key, saving unencrypted"); return msgs; }
+    const out = [];
+    for (const m of msgs){
+      try { out.push({ role: m.role, content: await encryptMessage(m.content, sessionKey, currentUid) }); }
+      catch(e){ console.error("Mitra: encrypt failed for a message, saving as-is", e); out.push(m); }
+    }
+    return out;
+  }
+
+  async function decryptMessages(msgs){
+    if (!sessionKey) return msgs;
+    const out = [];
+    for (const m of msgs){
+      try { out.push({ role: m.role, content: await decryptMessage(m.content, sessionKey, currentUid) }); }
+      catch(e){ out.push(m); }
+    }
+    return out;
+  }
 
   function makeId(){ return "c_" + Math.random().toString(36).slice(2) + Date.now().toString(36); }
   function makeChat(seedMessages){
@@ -978,12 +874,13 @@
     c.messages = messages;
     c.updatedAt = new Date().toISOString();
     if (!c.title) c.title = titleFor(c);
-    if (window.__mitraSaveChat) await window.__mitraSaveChat(currentUid, activeId, c);
+    if (window.__mitraSaveChat){
+      const toSave = Object.assign({}, c, { messages: await encryptMessages(c.messages) });
+      await window.__mitraSaveChat(currentUid, activeId, toSave);
+    }
   }
-  function save(){ persistActive(); }   // fire-and-forget; the UI never waits on the network write
+  function save(){ persistActive(); }
 
-  // stable per-visit session id (for depth) — deviceId/isReturn stay local & anonymous;
-  // uid (once signed in) rides along too, giving proper account-level retention.
   function id(){ return Math.random().toString(36).slice(2) + Date.now().toString(36); }
   let deviceId = localStorage.getItem("mitra_device");
   const isReturn = !!deviceId;
@@ -992,7 +889,6 @@
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   function ev(type, extra){ if (window.__mitraEvent) window.__mitraEvent(Object.assign({ type, deviceId, sessionId, isReturn, tz, uid: currentUid }, extra||{})); }
 
-  // ====================== render ======================
   function render(){
     thread.innerHTML = "";
     for (const m of messages) bubble(m.role, m.content);
@@ -1007,7 +903,6 @@
   }
   function scroll(){ requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; }); }
 
-  // ====================== greeting (Mitra speaks first, time-aware) ======================
   function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
 
   function greetingLine(){
@@ -1052,19 +947,18 @@
     ]);
   }
 
-  // ====================== chat switching (new / switch / delete) ======================
   function switchChat(newId){
     if (!chats[newId] || newId === activeId){ closeChats(); return; }
     activeId = newId;
     messages = chats[activeId].messages;
-    supportShown = false;   // re-arm the safety card in the new conversation's context
+    supportShown = false;
     render();
     closeChats();
   }
   function newChat(){
     const c = makeChat([{ role:"mitra", content: greetingLine() }]);
     activeId = c.id;
-    messages = chats[activeId].messages;   // must happen BEFORE persistActive(), which reads `messages`
+    messages = chats[activeId].messages;
     persistActive();
     supportShown = false;
     render();
@@ -1117,12 +1011,8 @@
 
   function boot(){
     render();
-    // Use the ACCOUNT's own data (synced via Firestore) as the source of truth for
-    // "have we talked recently" — not a per-device flag. A per-device flag meant two
-    // different devices on the same account could each independently decide "it's
-    // been a while" and both fire the return greeting into the same shared chat.
     const c = chats[activeId];
-    const hasHistory = c && c.messages && c.messages.length > 1;   // more than just the seed greeting
+    const hasHistory = c && c.messages && c.messages.length > 1;
     if (!hasHistory){
       ev("first_open");
       return;
@@ -1133,15 +1023,12 @@
       const r = returnLine();
       setTimeout(() => {
         messages.push({ role:"mitra", content: r });
-        save(); bubble("mitra", r); scroll();   // save() updates updatedAt, which now marks it "seen" for every device
+        save(); bubble("mitra", r); scroll();
       }, 500);
     }
     ev("return_open");
   }
 
-  // ====================== crisis safety backstop ======================
-  // Crude, intentionally broad. This is a *backstop* — the model is also told how
-  // to respond with care. It surfaces a warm support card; it never lists methods.
   const CRISIS = [
     "kill myself","want to die","end my life","end it all","don't want to live","dont want to live",
     "no reason to live","better off dead","suicide","suicidal","self harm","self-harm","hurt myself",
@@ -1165,13 +1052,10 @@
     }
   }
 
-  // ====================== send ======================
   async function sendMessage(){
     const text = box.value.trim();
     if (!text || busy) return;
 
-    // offline guard: don't consume their message (it stays in the box), just
-    // let them know gently — no failed fetch, no retry burn, nothing lost.
     if (!navigator.onLine){
       bubble("mitra", "Looks like your internet dropped for a moment. I'm right here — your message is safe in the box, send it once you're back online. 🌙");
       scroll();
@@ -1189,15 +1073,12 @@
     busy = true; send.disabled = true;
     glow.classList.add("thinking");
 
-    // typing indicator
     const typing = document.createElement("div");
     typing.className = "typing"; typing.innerHTML = "<i></i><i></i><i></i>";
     thread.appendChild(typing); scroll();
 
     let mitraEl = null, acc = "";
     try {
-      // One quiet retry: covers a Render dyno that's mid-boot (cold start).
-      // Typing dots stay visible, so the user just sees Mitra "thinking" longer.
       let resp = null;
       try {
         resp = await fetch(API_BASE + "/chat", {
@@ -1240,7 +1121,6 @@
     }
   }
 
-  // ====================== composer behavior ======================
   function autosize(){ box.style.height = "auto"; box.style.height = Math.min(box.scrollHeight, 130) + "px"; }
   box.addEventListener("input", autosize);
   box.addEventListener("keydown", (e) => {
@@ -1248,25 +1128,19 @@
   });
   send.addEventListener("click", sendMessage);
 
-  // ====================== voice input (speak -> live transcript -> auto-send) ======================
-  // Speech lands in the box live (interim results) so the student sees what's
-  // being heard. When speech ends, the message AUTO-SENDS through the SAME
-  // sendMessage() path as typing — same crisis-detection backstop, same
-  // everything. There is still no second, safety-bypassing send path.
-  // Tap the mic again while recording = stop early (what was heard still sends).
   (function initVoice(){
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR){ mic.hidden = true; return; }   // graceful degrade (e.g. Safari/iOS)
+    if (!SR){ mic.hidden = true; return; }
     mic.hidden = false;
 
     const IDLE_PLACEHOLDER = box.placeholder;
     let recognizing = false;
-    let heardSomething = false;   // a FINAL transcript actually landed
-    let baseText = "";            // whatever was typed before recording started
+    let heardSomething = false;
+    let baseText = "";
     const recog = new SR();
     recog.lang = "en-IN";
     recog.continuous = false;
-    recog.interimResults = true;  // live words appear in the box while speaking
+    recog.interimResults = true;
 
     function setRecording(on){
       recognizing = on;
@@ -1302,21 +1176,19 @@
         const uses = parseInt(localStorage.getItem("mitra_voice_uses") || "0", 10) + 1;
         localStorage.setItem("mitra_voice_uses", String(uses));
         ev("voice_used", { uses, firstUse: uses === 1 });
-        sendMessage();   // the one and only send path
+        sendMessage();
       }
     });
 
     recog.addEventListener("error", () => { heardSomething = false; setRecording(false); });
   })();
 
-  // ====================== privacy sheet ======================
   const sheet = document.getElementById("sheet"), sheetBg = document.getElementById("sheet-bg");
   function openSheet(o){ sheet.classList.toggle("open", o); sheetBg.classList.toggle("open", o); }
   document.getElementById("info").addEventListener("click", () => openSheet(true));
   document.getElementById("sheet-close").addEventListener("click", () => openSheet(false));
   sheetBg.addEventListener("click", () => openSheet(false));
 
-  // ====================== chats sheet ======================
   const chatsheet = document.getElementById("chatsheet"), chatsheetBg = document.getElementById("chatsheet-bg");
   function openChats(o){
     chatsheet.classList.toggle("open", o); chatsheetBg.classList.toggle("open", o);
@@ -1328,7 +1200,6 @@
   chatsheetBg.addEventListener("click", () => openChats(false));
   document.getElementById("newchat-btn").addEventListener("click", newChat);
 
-  // ====================== auth screen wiring ======================
   const authscreen  = document.getElementById("authscreen");
   const appEl       = document.getElementById("app");
   const authEmail   = document.getElementById("auth-email");
@@ -1358,7 +1229,6 @@
     const res = fn ? await fn(email, password) : { ok:false, error:"Sign-in isn't configured yet." };
     authSubmit.disabled = false;
     if (!res.ok) showAuthError(res.error);
-    // on success, __mitraOnAuthChange fires on its own and takes it from here
   });
   authPassword.addEventListener("keydown", (e) => { if (e.key === "Enter") authSubmit.click(); });
 
@@ -1371,12 +1241,10 @@
   });
 
   document.getElementById("logout-btn").addEventListener("click", async () => {
-    openSheet(false);   // close the sheet first — otherwise it sits on top of the auth screen and logout looks like it did nothing
+    openSheet(false);
     if (window.__mitraLogOut) await window.__mitraLogOut();
-    // __mitraOnAuthChange fires on its own and shows the auth screen again
   });
 
-  // delete ALL chats (privacy control — a privacy-first app must offer a full wipe)
   document.getElementById("wipe-btn").addEventListener("click", async () => {
     if (!confirm("Delete ALL your chats forever? This can't be undone.")) return;
     const ids = Object.keys(chats);
@@ -1384,17 +1252,15 @@
       if (window.__mitraDeleteChat && currentUid) await window.__mitraDeleteChat(currentUid, cid);
     }
     chats = {};
-    newChat();          // fresh greeting, fresh start
+    newChat();
     openSheet(false);
     ev("wipe_all");
   });
 
-  // Escape closes any open sheet
   addEventListener("keydown", (e) => {
     if (e.key === "Escape"){ openSheet(false); openChats(false); openFeedback(false); }
   });
 
-  // ====================== feedback sheet ======================
   const feedbacksheet = document.getElementById("feedbacksheet"), feedbacksheetBg = document.getElementById("feedbacksheet-bg");
   const feedbackText = document.getElementById("feedback-text");
   const feedbackSend = document.getElementById("feedback-send");
@@ -1424,20 +1290,28 @@
     }
   });
 
-  // ====================== sign-in state -> app state ======================
-  let initializedFor = null;   // guards against onAuthStateChanged re-firing mid-session
+  let initializedFor = null;
   async function onSignedIn(user){
     authscreen.hidden = true;
     appEl.hidden = false;
-    if (initializedFor === user.uid) return;   // already loaded for this session — don't reset state under the user
+    if (initializedFor === user.uid) return;
     initializedFor = user.uid;
     currentUid = user.uid;
+
+    try {
+      const idToken = window.__mitraGetIdToken ? await window.__mitraGetIdToken() : null;
+      sessionKey = idToken ? await fetchSessionKey(API_BASE, idToken) : null;
+    } catch(e){ console.error("Mitra: could not obtain session key", e); sessionKey = null; }
+
     chats = (window.__mitraLoadChats ? await window.__mitraLoadChats(currentUid) : {}) || {};
+    for (const cid in chats){
+      chats[cid].messages = await decryptMessages(chats[cid].messages || []);
+    }
     activeId = mostRecentId();
     if (!activeId){
       const c = makeChat([{ role:"mitra", content: greetingLine() }]);
       activeId = c.id;
-      messages = chats[activeId].messages;   // must happen BEFORE persistActive(), which reads `messages`
+      messages = chats[activeId].messages;
       await persistActive();
     } else {
       messages = chats[activeId].messages;
@@ -1447,17 +1321,13 @@
   }
   function onSignedOut(){
     initializedFor = null;
-    currentUid = null; chats = {}; activeId = null; messages = [];
-    openSheet(false); openChats(false); openFeedback(false);   // no sheet should survive a logout
+    currentUid = null; sessionKey = null; chats = {}; activeId = null; messages = [];
+    openSheet(false); openChats(false); openFeedback(false);
     appEl.hidden = true;
     authscreen.hidden = false;
     authEmail.value = ""; authPassword.value = ""; clearAuthError();
   }
 
-  // ====================== go ======================
-  // Wait for the Firebase module (type="module", deferred) to have actually run
-  // before checking for its bridge functions — otherwise this classic script can
-  // execute first and wrongly conclude "Firebase isn't configured."
   function initAuthFlow(){
     if (window.__mitraOnAuthChange){
       window.__mitraOnAuthChange((user) => { if (user) onSignedIn(user); else onSignedOut(); });
@@ -1471,7 +1341,6 @@
     initAuthFlow();
   }
 
-  // register service worker (installable PWA) — optional, ignore if it fails
   if ("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 })();
 </script>

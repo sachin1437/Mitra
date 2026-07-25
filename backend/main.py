@@ -20,9 +20,11 @@ import re
 import time
 import random
 import asyncio
+import json
+import base64 as b64
 from collections import defaultdict, deque
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Header, HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -31,7 +33,13 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+import firebase_admin
+from firebase_admin import credentials, auth as firebase_auth
+
+
 load_dotenv()
+
+from crypto_utils import encrypt_message, decrypt_message, derive_user_key
 
 # ----------------------------------------------------------------------------
 # config
@@ -87,6 +95,17 @@ if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY is not set. Put it in backend/.env before running.")
 
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+
+# ----------------------------------------------------------------------------
+# Firebase Admin init (for verifying login tokens server-side, /session-key route)
+# ----------------------------------------------------------------------------
+_FIREBASE_SA_B64 = os.environ.get("FIREBASE_SERVICE_ACCOUNT_B64", "").strip()
+if not _FIREBASE_SA_B64:
+    print("WARNING: FIREBASE_SERVICE_ACCOUNT_B64 not set. /session-key will fail until it is.")
+else:
+    _sa_json = json.loads(b64.b64decode(_FIREBASE_SA_B64))
+    _cred = credentials.Certificate(_sa_json)
+    firebase_admin.initialize_app(_cred)
 
 # ----------------------------------------------------------------------------
 # Mitra's persona  (the single most important part — edit this to tune the voice)
@@ -342,6 +361,41 @@ class ChatRequest(BaseModel):
 @app.get("/health")
 def health():
     return {"ok": True, "model": GEMINI_MODEL, "key_set": bool(GEMINI_API_KEY)}
+
+
+@app.get("/session-key")
+async def session_key(authorization: str = Header(None)):
+    """
+    Client calls this once after Firebase login, sending:
+        Authorization: Bearer <firebase-id-token>
+
+    We verify the token is real and unexpired (firebase_admin checks it against
+    Google's public keys — nobody can forge a token without Firebase's private
+    signing key, which only Google holds).
+
+    Then we derive that user's AES key from the server-only master secret and
+    hand back the raw key bytes (base64) over HTTPS. The key itself is NEVER
+    stored anywhere — derived fresh, sent, done. Client keeps it in memory
+    (Web Crypto non-extractable import) for the session only.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or malformed Authorization header")
+
+    id_token = authorization.split(" ", 1)[1].strip()
+
+    try:
+        decoded = firebase_auth.verify_id_token(id_token)
+    except Exception:
+        # Never leak WHY verification failed (expired vs malformed vs forged) —
+        # that's an oracle an attacker could use to probe token validity.
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+
+    uid = decoded.get("uid")
+    if not uid:
+        raise HTTPException(status_code=401, detail="Invalid session")
+
+    key_bytes = derive_user_key(uid)
+    return {"key": b64.b64encode(key_bytes).decode("utf-8")}
 
 
 @app.post("/chat")

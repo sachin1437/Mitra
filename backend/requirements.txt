@@ -3,3 +3,5 @@ uvicorn[standard]>=0.30
 google-genai>=1.0
 python-dotenv>=1.0
 pydantic>=2.7
+cryptography>=42.0
+firebase-admin>=6.5
