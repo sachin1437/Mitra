@@ -8,7 +8,7 @@ Live at [mitra.cybernetic.co.in](https://mitra.cybernetic.co.in)
 
 ## What Mitra is
 
-Mitra isn't a therapist, a coach, or a productivity bot. It's the friend who picks up at 2am. Warm, honest, occasionally in Hinglish, and genuinely present. It listens more than it advises, remembers your conversations, and never turns into a homework-doing assistant.
+Mitra isn't just a therapist, a coach, or a productivity bot. It's the friend who picks up at 2am. Warm, honest, occasionally in Hinglish, and genuinely present. It listens more than it advises, remembers your conversations, and never turns into a homework-doing assistant.
 
 Built solo, currently unregistered as any legal entity.
 
