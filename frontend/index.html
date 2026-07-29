@@ -248,6 +248,12 @@
     appearance:none; border:1px solid var(--line-warm); background:linear-gradient(180deg, rgba(255,176,102,.16), rgba(255,176,102,.06));
     color:var(--ember-core); font-family:inherit; font-weight:600; font-size:.86rem; padding:.5rem .9rem; border-radius:100px; cursor:pointer;
   }
+  #incognito-btn{
+    appearance:none; border:1px solid rgba(183,158,149,.35); background:rgba(255,255,255,.03);
+    color:var(--muted); font-family:inherit; font-weight:600; font-size:.86rem; padding:.5rem .9rem; border-radius:100px; cursor:pointer;
+    margin-left:.5rem;
+  }
+  #incognito-btn:hover{ border-color:var(--muted); color:var(--text); }
   #chatlist{ overflow-y:auto; flex:1 1 auto; display:flex; flex-direction:column; gap:.4rem; margin-bottom:.6rem; }
   .chatrow{ display:flex; align-items:center; gap:.6rem; padding:.7rem .8rem; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.02); cursor:default; }
   .chatrow.active{ border-color:var(--line-warm); background:rgba(255,176,102,.07); }
@@ -291,12 +297,56 @@
     *{ animation:none !important; }
     #space, #space3d{ display:none; }
     #authbox{ transition:none; transform:none !important; }
+  }  /* ---------- incognito mode: cool, muted theme + drifting ghosts ---------- */
+  body.incognito-mode #glow{ opacity:.18; }
+  body.incognito-mode #space,
+  body.incognito-mode #space3d{ filter:grayscale(1) brightness(.5) contrast(1.05); }
+  body.incognito-mode header .brand,
+  body.incognito-mode header .bdot{ filter:grayscale(1) brightness(.85); }
+
+  #incognito-ghosts{
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    opacity:0; transition:opacity .7s var(--ease);
+  }
+  body.incognito-mode #incognito-ghosts{ opacity:1; }
+
+  .ighost{
+    position:absolute; bottom:-60px;
+    animation-name: ighost-rise, ighost-sway;
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: infinite, infinite;
+    opacity:.8;
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
+  }
+  @keyframes ighost-rise{
+    0%{ transform: translateY(0); opacity:0; }
+    8%{ opacity:.8; }
+    88%{ opacity:.8; }
+    100%{ transform: translateY(-115vh); opacity:0; }
+  }
+  @keyframes ighost-sway{
+    0%,100%{ margin-left:0; }
+    50%{ margin-left:22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ighost{ animation:none; opacity:.5; }
   }
 </style>
 </head>
 <body>
   <canvas id="space" aria-hidden="true"></canvas>
   <canvas id="space3d" aria-hidden="true"></canvas>
+
+  <!-- incognito mode: drifting ghosts, shown only while an incognito chat is active -->
+  <div id="incognito-ghosts" aria-hidden="true">
+    <svg class="ighost" style="left:8%;  width:46px; animation-duration:14s, 4.2s; animation-delay:0s, 0s;"    viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".92"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+    <svg class="ighost" style="left:22%; width:30px; animation-duration:11s, 3.1s; animation-delay:2.5s, .4s;" viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".78"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+    <svg class="ighost" style="left:38%; width:54px; animation-duration:17s, 5s;   animation-delay:5s, 1s;"    viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".85"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+    <svg class="ighost" style="left:56%; width:34px; animation-duration:12.5s, 3.6s; animation-delay:1.2s, .8s;" viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".8"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+    <svg class="ighost" style="left:72%; width:42px; animation-duration:15.5s, 4.6s; animation-delay:3.8s, .2s;" viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".9"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+    <svg class="ighost" style="left:86%; width:26px; animation-duration:10s, 2.8s;  animation-delay:6.5s, .6s;" viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".72"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+  </div>
   <div id="glow" aria-hidden="true"></div>
 
   <div id="authscreen">
@@ -348,7 +398,7 @@
   <div id="sheet">
     <h3>just so you know 🌙</h3>
     <p><b>Your chats are saved to your own private account</b> so they're right where you left them, even on a new device. Only you can see them in the app. Delete a chat and it's gone from our records for real.</p>
-    <p>Your messages are encrypted before they're stored; even we can't read your saved chats. To generate a reply, your message is briefly decrypted and sent to an AI, then the response is encrypted again before saving. Nothing is stored in plain text.</p>
+    <p>To reply, your messages are sent to an AI over a secure connection. They're used only to write back to you, and we don't read your conversations.</p>
     <p>We count a few basic usage signals, like whether people come back, to know if Mitra is actually helping. Never the content of what you say.</p>
     <p style="color:var(--faint); font-size:.82rem;">I'm a friend to talk to, not a therapist or doctor. If things feel heavy, talking to someone you trust — or Tele-MANAS (<a href="tel:14416" style="color:var(--ember-core); text-decoration:none; border-bottom:1px dashed var(--ember-core);">14416</a>, free, 24×7) — can really help.</p>
     <button class="close" id="sheet-close">okay</button>
@@ -361,7 +411,10 @@
   <div id="chatsheet">
     <div class="chatlist-head">
       <h3>your chats</h3>
-      <button id="newchat-btn">+ new chat</button>
+      <div>
+        <button id="newchat-btn">+ new chat</button>
+        <button id="incognito-btn" title="Starts a chat that's never saved anywhere">🕶 incognito</button>
+      </div>
     </div>
     <div id="chatlist"></div>
     <button class="close" id="chatsheet-close">close</button>
@@ -874,6 +927,7 @@ import { fetchSessionKey, encryptMessage, decryptMessage } from "./crypto-utils.
     c.messages = messages;
     c.updatedAt = new Date().toISOString();
     if (!c.title) c.title = titleFor(c);
+    if (c._incognito) return;   // never written anywhere — stays in memory only, gone on tab close/switch
     if (window.__mitraSaveChat){
       const toSave = Object.assign({}, c, { messages: await encryptMessages(c.messages) });
       await window.__mitraSaveChat(currentUid, activeId, toSave);
@@ -947,23 +1001,54 @@ import { fetchSessionKey, encryptMessage, decryptMessage } from "./crypto-utils.
     ]);
   }
 
+  function applyIncognitoTheme(){
+    const isIncognito = activeId && chats[activeId] && chats[activeId]._incognito;
+    document.body.classList.toggle("incognito-mode", !!isIncognito);
+  }
+
+  // Incognito chats live only in the in-memory `chats` object. If we switch
+  // away from one, drop it entirely — otherwise it would just sit in memory
+  // for the rest of the session, which defeats "not saved anywhere."
+  function discardIncognitoIfActive(){
+    if (activeId && chats[activeId] && chats[activeId]._incognito){
+      delete chats[activeId];
+    }
+  }
+
   function switchChat(newId){
     if (!chats[newId] || newId === activeId){ closeChats(); return; }
+    discardIncognitoIfActive();
     activeId = newId;
     messages = chats[activeId].messages;
     supportShown = false;
     render();
+    applyIncognitoTheme();
     closeChats();
   }
   function newChat(){
+    discardIncognitoIfActive();
     const c = makeChat([{ role:"mitra", content: greetingLine() }]);
     activeId = c.id;
     messages = chats[activeId].messages;
     persistActive();
     supportShown = false;
     render();
+    applyIncognitoTheme();
     closeChats();
     ev("new_chat");
+  }
+  function newIncognitoChat(){
+    discardIncognitoIfActive();
+    const c = makeChat([{ role:"mitra", content: greetingLine() }]);
+    c._incognito = true;
+    activeId = c.id;
+    messages = chats[activeId].messages;
+    // no persistActive() call — nothing to save, this chat never touches Firestore
+    supportShown = false;
+    render();
+    applyIncognitoTheme();
+    closeChats();
+    ev("new_incognito_chat");
   }
   async function deleteChat(delId){
     const wasActive = delId === activeId;
@@ -975,7 +1060,8 @@ import { fetchSessionKey, encryptMessage, decryptMessage } from "./crypto-utils.
         activeId = nextId;
         messages = chats[activeId].messages;
         render();
-      } else {
+        applyIncognitoTheme();
+          } else {
         newChat();
         return;
       }
@@ -986,7 +1072,9 @@ import { fetchSessionKey, encryptMessage, decryptMessage } from "./crypto-utils.
     const wrap = document.getElementById("chatlist");
     if (!wrap) return;
     wrap.innerHTML = "";
-    const ids = Object.keys(chats).sort((a,b) => new Date(chats[b].updatedAt) - new Date(chats[a].updatedAt));
+    const ids = Object.keys(chats)
+      .filter((cid) => !chats[cid]._incognito)
+      .sort((a,b) => new Date(chats[b].updatedAt) - new Date(chats[a].updatedAt));
     ids.forEach((cid) => {
       const c = chats[cid];
       const row = document.createElement("div");
@@ -1011,6 +1099,7 @@ import { fetchSessionKey, encryptMessage, decryptMessage } from "./crypto-utils.
 
   function boot(){
     render();
+    applyIncognitoTheme();
     const c = chats[activeId];
     const hasHistory = c && c.messages && c.messages.length > 1;
     if (!hasHistory){
@@ -1199,6 +1288,7 @@ import { fetchSessionKey, encryptMessage, decryptMessage } from "./crypto-utils.
   document.getElementById("chatsheet-close").addEventListener("click", () => openChats(false));
   chatsheetBg.addEventListener("click", () => openChats(false));
   document.getElementById("newchat-btn").addEventListener("click", newChat);
+  document.getElementById("incognito-btn").addEventListener("click", newIncognitoChat);
 
   const authscreen  = document.getElementById("authscreen");
   const appEl       = document.getElementById("app");
@@ -1322,6 +1412,7 @@ import { fetchSessionKey, encryptMessage, decryptMessage } from "./crypto-utils.
   function onSignedOut(){
     initializedFor = null;
     currentUid = null; sessionKey = null; chats = {}; activeId = null; messages = [];
+    document.body.classList.remove("incognito-mode");
     openSheet(false); openChats(false); openFeedback(false);
     appEl.hidden = true;
     authscreen.hidden = false;
