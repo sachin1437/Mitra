@@ -8,7 +8,7 @@ Live at [mitra.cybernetic.co.in](https://mitra.cybernetic.co.in)
 
 ## What Mitra is
 
-Mitra isn't just a therapist, a coach, or a productivity bot. It's the friend who picks up at 2am. Warm, honest, occasionally in Hinglish, and genuinely present. It listens more than it advises, remembers your conversations, and never turns into a homework-doing assistant.
+Mitra isn't a therapist, a coach, or a productivity bot. It's the friend who picks up at 2am. Warm, honest, occasionally in Hinglish, and genuinely present. It listens more than it advises, remembers your conversations, and never turns into a homework-doing assistant.
 
 Built solo, currently unregistered as any legal entity.
 
@@ -17,6 +17,7 @@ Built solo, currently unregistered as any legal entity.
 - **Persona-tuned conversation.** Casual, warm, no therapy-speak. Language starts in English and eases into natural Hinglish as the conversation goes on. Rules against repeating itself, tuned to keep the conversation actually alive instead of feeling like an interview.
 - **Crisis safety layer.** A deterministic, model-independent phrase and pattern net that guarantees a safe, warm, complete reply surfacing Tele-MANAS (14416) the moment real distress shows up. Tested against an independent 39-case adversarial set spanning English, Hindi, and Hinglish, including indirect, metaphorical, and code-switched phrasing. Currently at **93.1% recall, 0% false positives**.
 - **Encrypted chat history.** Every message is encrypted on the device before it ever reaches the database (AES-256-GCM). The encryption key is derived on the server from a secret that never leaves the backend, and is only ever handed to an already-authenticated client for that session. Nothing is ever stored in plaintext.
+- **Incognito mode.** Some conversations shouldn't leave a trace at all. Starting an incognito chat skips storage entirely, no encryption, no database write, nothing. It lives in the browser for as long as the tab is open and disappears the moment you switch away or close it. Crisis detection stays fully active regardless, this only changes what gets remembered, never what gets caught. The screen visibly shifts (muted tones, drifting ghosts) while it's active, so it's always obvious which mode you're in.
 - **Per-account persistent history.** Firebase Auth and Firestore, synced across devices, with a full "delete everything" option.
 - **Voice input.** Live transcript while you speak, auto-sends when you stop, goes through the exact same safety checks as typed messages.
 - **Daily cost ceilings.** Global and per-user limits so free-tier usage stays predictable. Crisis replies are never capped or counted against this.
@@ -36,7 +37,8 @@ Built solo, currently unregistered as any legal entity.
 
 Messages are encrypted in the browser and sent to Firebase as ciphertext only.
 The backend never stores chat content. It just derives session keys and calls
-Gemini for a reply.
+Gemini for a reply. Incognito chats never reach this pipeline at all, they
+stay client-side only.
 
 - **Frontend:** vanilla JS, Three.js background, Firebase Auth/Firestore, Web Crypto API for client-side encryption
 - **Backend:** FastAPI on Render, Google Gemini 2.5 Flash for generation, Firebase Admin SDK for verifying sessions
@@ -77,6 +79,7 @@ Runs the deterministic detector against an independent adversarial test set and 
 ## Privacy & safety posture
 
 - Chats are encrypted at rest. Even someone with direct Firestore access only sees ciphertext
+- Incognito chats aren't stored anywhere at all, encrypted or otherwise
 - Message content is never logged
 - Crisis phrases surface Tele-MANAS (14416), a helpline reference, not an automated report or API integration
 - Usage metrics are anonymous only (return visits, session counts). Never message content
@@ -88,4 +91,4 @@ Active solo-founder prototype. Not yet a registered legal entity.
 
 ## License
 
-Not yet decided. Reach out before reusing anything here.
+All rights reserved. See [LICENSE](./LICENSE). Reach out before reusing anything here.
