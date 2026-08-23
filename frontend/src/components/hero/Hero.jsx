@@ -9,7 +9,7 @@ export default function Hero() {
     config: {
       position: [6.0, 1, 0], // Moved further right and down for the larger size
       rotation: [0.1, -0.2, 0],
-      scale: 2.4, // Increased further height
+      scale: 1.5, // Original sane scale
       mobileConfig: {
         position: [0, 1.8, 0], // Top center, pushed down a bit
         scale: 1.8, // Much larger on mobile compared to generic fallback

@@ -9,36 +9,36 @@ if (typeof window !== "undefined") {
 }
 
 const features = [
-  { 
-    title: "Always there", 
-    desc: "No waiting for an appointment and no explaining yourself twice. Mitra is there at 2am the same way it's there at 2pm." 
+  {
+    title: "Always there",
+    desc: "No waiting for an appointment and no explaining yourself twice. Mitra is there at 2am the same way it's there at 2pm."
   },
-  { 
-    title: "No judgment", 
-    desc: "Say the messy, half-formed thing. There's no face to read and no relationship to protect afterward." 
+  {
+    title: "No judgment",
+    desc: "Say the messy, half-formed thing. There's no face to read and no relationship to protect afterward."
   },
-  { 
-    title: "Speaks your language", 
-    desc: "Moves naturally between English and Hindi the way you actually think, not the way a textbook does." 
+  {
+    title: "Speaks your language",
+    desc: "Moves naturally between English and Hindi the way you actually think, not the way a textbook does."
   },
-  { 
-    title: "Genuinely private", 
-    desc: "Not private with an asterisk. What you say stays where you said it." 
+  {
+    title: "Genuinely private",
+    desc: "Not private with an asterisk. What you say stays where you said it."
   },
 ]
 
 export default function FeaturesSection() {
   const containerRef = useRef(null)
-  
+
   const robotRef = useRobotSection({
     id: 'features',
     config: {
       position: [4.5, 2.5, -1], // Far Top right, away from title text
-      rotation: [0.1, -0.4, 0], 
+      rotation: [0.1, -0.4, 0],
       scale: 0.8
     }
   });
-  
+
   useEffect(() => {
     if (!containerRef.current) return;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -78,15 +78,15 @@ export default function FeaturesSection() {
   }, [])
 
   return (
-    <section 
+    <section
       ref={(el) => {
         containerRef.current = el;
         robotRef.current = el;
-      }} 
+      }}
       className="py-32 md:py-48 bg-bg-primary relative overflow-hidden border-t border-border"
     >
       {/* Subtle background grid pattern */}
-      <div 
+      <div
         className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
         style={{
           backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px)',
@@ -95,7 +95,7 @@ export default function FeaturesSection() {
       />
 
       <div className="max-w-[90rem] mx-auto px-6 md:px-12 relative z-10">
-        
+
         {/* Header Section */}
         <div className="fs-header mb-24">
           <div className="flex items-center gap-4 mb-8">
@@ -106,7 +106,7 @@ export default function FeaturesSection() {
             Built to actually help, not just listen.
           </h2>
         </div>
-        
+
         {/* Spotlight Cards Grid */}
         <div className="fs-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           {features.map((feature, i) => (

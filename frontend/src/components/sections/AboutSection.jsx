@@ -4,23 +4,23 @@ import { useRobotSection } from '@/hooks/useRobotSection'
 
 export default function AboutSection() {
   const containerRef = useRef(null)
-  
+
   const robotRef = useRobotSection({
     id: 'about',
     config: {
-      position: [0, 2.8, -1], // Top center, safely above the 2-column grid
-      rotation: [0.2, 0, 0], // Looking slightly down
+      position: [4.5, 3.2, -1.5], // Top right, above the right column
+      rotation: [0.1, -0.2, 0], // Looking slightly down and left
       scale: 0.8
     }
   });
-  
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       // Headline reveal
       gsap.fromTo('.about-headline',
         { opacity: 0, y: 50 },
         {
-          opacity: 1, 
+          opacity: 1,
           y: 0,
           duration: 1,
           scrollTrigger: {
@@ -31,12 +31,12 @@ export default function AboutSection() {
           }
         }
       )
-      
+
       // Principles stagger
       gsap.fromTo('.about-principle',
         { opacity: 0, x: -20 },
         {
-          opacity: 1, 
+          opacity: 1,
           x: 0,
           stagger: 0.1,
           scrollTrigger: {
@@ -48,7 +48,7 @@ export default function AboutSection() {
         }
       )
     }, containerRef)
-    
+
     return () => ctx.revert()
   }, [])
 
@@ -61,17 +61,17 @@ export default function AboutSection() {
   ]
 
   return (
-    <section 
+    <section
       ref={(el) => {
         containerRef.current = el;
         robotRef.current = el;
-      }} 
-      id="about" 
+      }}
+      id="about"
       className="py-24 md:py-40 bg-[var(--color-bg-secondary)] border-t border-[var(--color-border)] relative"
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24">
-          
+
           <div className="flex flex-col justify-center">
             <div className="text-xs tracking-[0.2em] uppercase text-[var(--color-text-secondary)] mb-6 about-headline">
               What is Mitra
@@ -84,7 +84,7 @@ export default function AboutSection() {
               without feeling like you need to formulate the perfect question.
             </p>
           </div>
-          
+
           <div className="about-principles-container flex flex-col justify-center gap-6">
             {principles.map((principle, index) => (
               <div key={index} className="about-principle flex items-center gap-6 group">
@@ -95,7 +95,7 @@ export default function AboutSection() {
               </div>
             ))}
           </div>
-          
+
         </div>
       </div>
     </section>

@@ -1,108 +1,101 @@
-import React, { useEffect, useState, useRef } from 'react'
-import gsap from 'gsap'
+import React, { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Preloader() {
   const [loading, setLoading] = useState(true)
-  const containerRef = useRef(null)
-  const textRef = useRef(null)
-  const progressRef = useRef(null)
-  const orbRef = useRef(null)
-  const glowRef = useRef(null)
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.to(orbRef.current, {
-        y: -10,
-        rotation: 8,
-        duration: 2.2,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      })
-
-      gsap.to(glowRef.current, {
-        scale: 1.08,
-        opacity: 0.85,
-        duration: 1.8,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      })
-    }, containerRef)
-
-    const tl = gsap.timeline({
-      onComplete: () => {
-        setLoading(false)
-      }
-    })
-
-    tl.fromTo(orbRef.current, {
-      scale: 0.72,
-      opacity: 0,
-      filter: 'blur(14px)'
-    }, {
-      scale: 1,
-      opacity: 1,
-      filter: 'blur(0px)',
-      duration: 0.8,
-      ease: 'power3.out'
-    })
-    .fromTo(progressRef.current, {
-      scaleX: 0,
-      opacity: 0.3,
-    }, {
-      scaleX: 1,
-      opacity: 1,
-      duration: 1.8,
-      ease: 'power3.inOut'
-    }, '-=0.1')
-    .to(textRef.current, {
-      opacity: 0,
-      y: -14,
-      filter: 'blur(4px)',
-      duration: 0.55,
-      ease: 'power2.inOut'
-    }, '-=0.25')
-    .to(containerRef.current, {
-      opacity: 0,
-      scale: 1.02,
-      duration: 0.7,
-      ease: 'expo.inOut'
-    })
-    .set(containerRef.current, {
-      display: 'none'
-    })
-
-    return () => {
-      tl.kill()
-      ctx.revert()
-    }
+    // Determine loading time. (In a real app, this waits for assets/models)
+    const timer = setTimeout(() => {
+      setLoading(false)
+    }, 2400)
+    return () => clearTimeout(timer)
   }, [])
 
-  if (!loading) return null
+  // Premium easing curve (Expo out/inOut style)
+  const ease = [0.76, 0, 0.24, 1]
+
+  const textVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { duration: 0.8, ease, staggerChildren: 0.1 } 
+    },
+    exit: { 
+      opacity: 0, 
+      y: -20, 
+      transition: { duration: 0.5, ease } 
+    }
+  }
+
+  const letterVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease } }
+  }
 
   return (
-    <div 
-      ref={containerRef}
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]"
-    >
-      <div ref={glowRef} className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.08),_transparent_42%)] opacity-70" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(255,255,255,0.02),transparent)] opacity-70" />
+    <AnimatePresence>
+      {loading && (
+        <motion.div
+          key="preloader"
+          initial={{ y: 0 }}
+          exit={{ 
+            y: '-100%', 
+            transition: { duration: 0.9, ease: [0.76, 0, 0.24, 1], delay: 0.3 } 
+          }}
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0a0a0a] text-white overflow-hidden"
+        >
+          {/* Subtle glowing background orb */}
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.5 }}
+            transition={{ duration: 2, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+            className="absolute inset-0 m-auto w-64 h-64 rounded-full bg-amber-500/10 blur-[100px]"
+          />
 
-      <div className="relative flex flex-col items-center">
-        <div ref={orbRef} className="mb-6 h-16 w-16 rounded-full border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-text-primary)_10%,transparent)] shadow-[0_0_80px_rgba(255,255,255,0.12)] backdrop-blur-md" />
+          <motion.div 
+            variants={textVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="relative flex flex-col items-center z-10"
+          >
+            {/* Logo Text Stagger */}
+            <div className="flex overflow-hidden mb-8">
+              {['M', 'I', 'T', 'R', 'A'].map((letter, i) => (
+                <motion.span 
+                  key={i} 
+                  variants={letterVariants}
+                  className="text-4xl md:text-6xl font-medium tracking-[0.2em] font-geist"
+                >
+                  {letter}
+                </motion.span>
+              ))}
+            </div>
 
-        <div ref={textRef} className="text-sm tracking-[0.3em] font-light uppercase text-[var(--color-text-secondary)] mb-8">
-          Initializing Mitra
-        </div>
-        
-        <div className="w-72 h-[1px] bg-[var(--color-border)] relative overflow-hidden rounded-full">
-          <div 
-            ref={progressRef} 
-            className="absolute top-0 left-0 h-full w-full bg-[linear-gradient(90deg,transparent,var(--color-text-primary),transparent)] origin-left scale-x-0"
-          ></div>
-        </div>
-      </div>
-    </div>
+            {/* Status Text */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 1 }}
+              className="text-xs md:text-sm tracking-[0.4em] uppercase text-gray-400 font-light mb-8"
+            >
+              System Initializing
+            </motion.div>
+
+            {/* Premium Progress Bar */}
+            <div className="w-64 md:w-80 h-[2px] bg-white/10 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ x: '-100%' }}
+                animate={{ x: '0%' }}
+                transition={{ duration: 1.8, ease: [0.76, 0, 0.24, 1], delay: 0.2 }}
+                className="w-full h-full bg-gradient-to-r from-amber-500/20 via-amber-400 to-amber-500/20"
+              />
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

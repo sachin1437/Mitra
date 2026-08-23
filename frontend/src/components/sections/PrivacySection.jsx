@@ -13,7 +13,9 @@ export default function PrivacySection() {
   const robotRef = useRobotSection({
     id: 'privacy',
     config: {
-      scale: 0 // Hide robot during this text-heavy section to avoid overlap
+      position: [0, -3.0, -3], // Bottom center, slightly back
+      rotation: [0, 0, 0],
+      scale: 1.0
     }
   });
 
