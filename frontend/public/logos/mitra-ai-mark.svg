@@ -1,0 +1,12 @@
+<svg width="300" height="72" viewBox="0 0 300 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <rect x="6" y="6" width="60" height="60" rx="18" fill="#0B0B0B"/>
+    <path d="M20 48V24h4.6l11.4 17 11.4-17H52v24h-5.2V34.1L36.5 47.2h-1L24.4 34.1V48H20Z" fill="#FFFFFF"/>
+    <circle cx="36" cy="52" r="2.8" fill="#FFFFFF" opacity="0.95"/>
+    <path d="M88 26h44c8.837 0 16 7.163 16 16s-7.163 16-16 16h-9l-8 6v-6H88c-8.837 0-16-7.163-16-16s7.163-16 16-16Z" fill="#0B0B0B"/>
+    <circle cx="102" cy="42" r="2.6" fill="#FFFFFF"/>
+    <circle cx="112" cy="42" r="2.6" fill="#FFFFFF" opacity="0.88"/>
+    <circle cx="122" cy="42" r="2.6" fill="#FFFFFF" opacity="0.76"/>
+    <text x="148" y="44" fill="#0B0B0B" font-family="Geist, Inter, system-ui, sans-serif" font-size="24" font-weight="700" letter-spacing="3">MITRA AI</text>
+  </g>
+</svg>

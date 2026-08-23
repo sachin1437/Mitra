@@ -1,0 +1,114 @@
+.scroll-stack-section {
+  position: relative;
+  padding: 7rem 0 10rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.06), transparent 30%),
+    radial-gradient(circle at 0% 100%, rgba(17, 18, 22, 0.05), transparent 28%),
+    var(--color-bg-primary);
+}
+
+.scroll-stack-track {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-stack-tail {
+  height: 32vh;
+}
+
+.scroll-expand-intro {
+  max-width: 42rem;
+  margin: 0 0 1.75rem;
+  color: var(--color-text-primary);
+}
+
+.scroll-expand-intro h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.scroll-expand-intro p:last-child {
+  margin: 1rem 0 0;
+  max-width: 34rem;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.scroll-stack-card {
+  position: sticky;
+  top: 9vh;
+  margin: 0 auto 8vh;
+  width: 100%;
+  min-height: 88vh;
+  z-index: calc(30 - var(--stack-index));
+}
+
+.scroll-expand-stage {
+  position: relative;
+  width: 100%;
+  min-height: 84vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scroll-expand-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  background: var(--color-bg-secondary);
+  border: 1px solid transparent;
+  box-shadow: 0 36px 100px rgba(0, 0, 0, 0.18);
+}
+
+.scroll-expand-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.72);
+  transform-origin: center center;
+  will-change: transform, opacity, filter;
+}
+
+.scroll-expand-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48), transparent 24%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.5), transparent 36%);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .scroll-stack-section {
+    padding: 4rem 0 6rem;
+  }
+
+  .scroll-expand-intro {
+    margin-bottom: 1.15rem;
+  }
+
+  .scroll-expand-intro h2 {
+    font-size: clamp(1.7rem, 8vw, 2.35rem);
+  }
+
+  .scroll-stack-card {
+    top: 7vh;
+    margin-bottom: 8vh;
+    min-height: 82vh;
+  }
+
+  .scroll-stack-tail {
+    height: 22vh;
+  }
+
+  .scroll-expand-stage {
+    min-height: 74vh;
+  }
+}

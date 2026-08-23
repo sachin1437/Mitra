@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Modern Electric Cyan/Blue Gradient -->
+    <linearGradient id="mitraGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F2FE" />
+      <stop offset="100%" stop-color="#4FACFE" />
+    </linearGradient>
+
+    <!-- Dark Mode Background -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0D1117" />
+      <stop offset="100%" stop-color="#04060A" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Container -->
+  <rect width="500" height="500" rx="100" fill="url(#bgGrad)" />
+
+  <!-- MONOGRAM "M" ROBOT MARK -->
+  <g transform="translate(50, 50)">
+    
+    <!-- Outer "M" Robot Head Contour Path -->
+    <path d="M 40 360 
+             L 40 80 
+             Q 40 40 80 40
+             L 130 40
+             L 200 160
+             L 270 40
+             L 320 40
+             Q 360 40 360 80
+             L 360 360
+             Q 360 400 320 400
+             L 280 400
+             Q 260 400 260 370
+             L 260 200
+             L 200 290
+             L 140 200
+             L 140 370
+             Q 140 400 120 400
+             L 80 400
+             Q 40 400 40 360 Z" 
+          fill="url(#mitraGrad)" />
+
+    <!-- Robot Faceplate Core (Negative Space Cutout) -->
+    <rect x="100" y="210" width="200" height="120" rx="40" fill="#0D1117" />
+
+    <!-- Left Vision Eye -->
+    <circle cx="150" cy="270" r="24" fill="url(#mitraGrad)" />
+    <circle cx="150" cy="270" r="10" fill="#0D1117" />
+
+    <!-- Right Vision Eye -->
+    <circle cx="250" cy="270" r="24" fill="url(#mitraGrad)" />
+    <circle cx="250" cy="270" r="10" fill="#0D1117" />
+
+    <!-- Integrated Signal Node (Antenna Core) -->
+    <circle cx="200" cy="90" r="14" fill="#0D1117" />
+    <circle cx="200" cy="90" r="8" fill="url(#mitraGrad)" />
+  </g>
+</svg>

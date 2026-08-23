@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#120809" />
+<title>Mitra</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --night:#1C1014; --night-2:#2A1820; --night-edge:#120809;
+    --ember-core:#FFD3A0; --ember:#FFB877; --ember-deep:#F0925A;
+    --rose:#E89BA8;
+    --text:#F5ECE4; --muted:#B79E95; --faint:#806560;
+    --line:rgba(255,236,222,.09); --line-warm:rgba(255,184,119,.28);
+    --glass:rgba(28,16,20,.55);
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    background:
+      radial-gradient(120% 90% at 50% 12%, #432634 0%, var(--night-2) 40%, var(--night) 68%, var(--night-edge) 100%);
+    background-attachment:fixed;
+    color:var(--text);
+    font-family:"Hanken Grotesk", system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    position:fixed; inset:0; overflow:hidden; overscroll-behavior:none;
+  }
+  body::after{
+    content:""; position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 100% at 50% 42%, transparent 45%, rgba(10,5,7,.55) 100%);
+  }
+  #space, #space3d{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+  #space{ opacity:.9; }
+  #space3d{ opacity:0; transition:opacity 1.4s var(--ease); }
+  #space3d.on{ opacity:.95; }
+  #glow{
+    position:fixed; left:50%; top:16%; width:min(88vw,520px); aspect-ratio:1;
+    transform:translate(-50%,-50%) scale(1); border-radius:50%;
+    pointer-events:none; z-index:1;
+    background:radial-gradient(circle at 50% 50%,
+      rgba(255,190,120,.22) 0%, rgba(255,150,110,.08) 38%, transparent 68%);
+    filter:blur(14px);
+    animation:breathe 6.5s var(--ease) infinite;
+    transition:opacity 1s var(--ease);
+    will-change:transform;
+  }
+  #glow::before{
+    content:""; position:absolute; inset:12%;
+    border-radius:50%;
+    background:conic-gradient(from 0deg,
+      transparent 0deg, rgba(255,200,140,.10) 70deg, transparent 150deg,
+      rgba(232,155,168,.07) 230deg, transparent 320deg);
+    animation:lamprot 28s linear infinite;
+    filter:blur(18px);
+  }
+  @keyframes lamprot{ to{ transform:rotate(360deg); } }
+  @keyframes breathe{ 0%,100%{ transform:translate(-50%,-50%) scale(1);} 50%{ transform:translate(-50%,-50%) scale(1.07);} }
+  #glow.thinking{ animation:breathe 2.4s var(--ease) infinite; }
+  #app{ position:relative; z-index:2; height:100%; display:flex; flex-direction:column; max-width:640px; margin:0 auto; }
+  #app[hidden]{ display:none; }
+  #authscreen{
+    position:relative; z-index:5; height:100%; display:flex; align-items:center; justify-content:center;
+    padding:24px; padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    perspective:1100px;
+  }
+  #authscreen[hidden]{ display:none; }
+  #authbox{
+    width:100%; max-width:380px;
+    background:linear-gradient(160deg, rgba(255,240,228,.07), rgba(255,240,228,.025));
+    border:1px solid var(--line-warm);
+    border-radius:24px; padding:2rem 1.7rem 1.7rem;
+    box-shadow:
+      0 30px 80px -28px rgba(0,0,0,.65),
+      0 2px 0 rgba(255,220,190,.06) inset;
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    transform-style:preserve-3d;
+    transition:transform .18s var(--ease);
+    will-change:transform;
+  }
+  #auth-sub{ text-align:center; margin-bottom:.3rem; color:var(--muted); }
+  #auth-welcome{
+    text-align:center; font-family:"Fraunces",serif; font-style:italic; font-weight:380;
+    font-size:1.08rem; color:var(--text); line-height:1.5; margin:1rem 0 1.6rem;
+  }
+  .auth-input{
+    width:100%; background:rgba(255,255,255,.045); border:1px solid var(--line); border-radius:14px;
+    color:var(--text); font-family:inherit; font-size:1rem; padding:.9rem 1.05rem; margin-bottom:.65rem;
+    transition:border-color .25s var(--ease), background .25s var(--ease);
+  }
+  .auth-input::placeholder{ color:var(--faint); }
+  .auth-input:focus{ outline:none; border-color:var(--ember); background:rgba(255,176,102,.06); }
+  .auth-error{
+    background:rgba(232,155,168,.12); border:1px solid rgba(232,155,168,.4); color:var(--rose);
+    font-size:.86rem; padding:.7rem .9rem; border-radius:12px; margin-bottom:.8rem; line-height:1.4;
+  }
+  .auth-links{ display:flex; justify-content:space-between; margin-top:1.1rem; gap:.6rem; flex-wrap:wrap; }
+  .linkbtn{ appearance:none; background:none; border:none; color:var(--muted); font-family:inherit; font-size:.84rem; cursor:pointer; padding:.2rem; transition:color .2s; }
+  .linkbtn:hover{ color:var(--ember-core); }
+  #logout-btn{
+    font-weight:700; font-size:.92rem; color:var(--rose);
+    border:1.5px solid rgba(232,155,168,.45); border-radius:100px;
+    padding:.55rem 1.3rem;
+    transition:background .2s var(--ease), color .2s;
+  }
+  #logout-btn:hover{ background:rgba(232,155,168,.14); color:var(--rose); }
+  .cta{
+    appearance:none; border:none; cursor:pointer; width:100%;
+    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+    background:linear-gradient(180deg, var(--ember-core), var(--ember));
+    color:var(--night-edge); font-family:inherit; font-weight:600; font-size:1rem;
+    padding:.9rem 1.4rem; border-radius:100px; margin-top:.5rem;
+    box-shadow:0 10px 30px -12px rgba(255,176,102,.6);
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease), opacity .2s var(--ease);
+  }
+  .cta:hover{ transform:translateY(-1px); box-shadow:0 14px 36px -12px rgba(255,176,102,.75); }
+  .cta:active{ transform:translateY(0) scale(.98); }
+  .cta:disabled{ opacity:.5; cursor:default; transform:none; box-shadow:none; }
+  header{
+    display:flex; align-items:center; gap:.6rem;
+    padding:calc(env(safe-area-inset-top) + 14px) 20px 12px;
+    position:relative;
+  }
+  .brand{ display:flex; align-items:center; gap:.5rem; font-family:"Fraunces",serif; font-style:italic; font-weight:420; font-size:1.32rem; color:var(--text);
+    text-shadow:0 0 24px rgba(255,180,120,.25); }
+  .bdot{ width:8px; height:8px; border-radius:50%;
+    background:radial-gradient(circle at 40% 40%, var(--ember-core), var(--ember-deep));
+    box-shadow:0 0 12px 1px rgba(255,176,102,.75); animation:bdot 3.6s var(--ease) infinite; }
+  @keyframes bdot{ 0%,100%{ transform:scale(1); opacity:.92;} 50%{ transform:scale(1.28); opacity:1;} }
+  .brand-sub{ font-family:"Hanken Grotesk",sans-serif; font-style:normal; font-weight:400; font-size:.72rem; color:var(--faint); letter-spacing:.02em; margin-left:.1rem; }
+  #info{ margin-left:auto; appearance:none; background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
+    width:38px; height:38px; border-radius:50%; cursor:pointer; font-family:"Fraunces",serif; font-style:italic; font-size:1.1rem; font-weight:600; transition:color .2s, border-color .2s, background .2s;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  #info:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
+  #ar-btn{ appearance:none; background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
+    width:38px; height:38px; border-radius:50%; cursor:pointer; display:grid; place-items:center;
+    transition:color .2s, border-color .2s, background .2s; margin-left:.5rem;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  #ar-btn:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
+  #chatlist-btn{ appearance:none; background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
+    width:38px; height:38px; border-radius:50%; cursor:pointer; display:grid; place-items:center;
+    transition:color .2s, border-color .2s, background .2s; margin-right:.5rem;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  #chatlist-btn:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
+  #thread{
+    flex:1; overflow-y:auto; padding:8px 18px 8px;
+    display:flex; flex-direction:column; gap:14px;
+    scroll-behavior:smooth;
+  }
+  #thread::-webkit-scrollbar{ width:0; }
+  .msg{ max-width:82%; line-height:1.5; font-size:1.02rem; padding:.72rem .95rem; border-radius:18px; opacity:0; transform:translateY(10px) scale(.98); animation:pop .45s var(--ease) forwards; white-space:pre-wrap; word-wrap:break-word; }
+  @keyframes pop{ to{ opacity:1; transform:none; } }
+  .msg.mitra{
+    align-self:flex-start; color:var(--text);
+    background:linear-gradient(165deg, rgba(255,240,228,.075), rgba(255,240,228,.035));
+    border:1px solid var(--line); border-bottom-left-radius:6px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    box-shadow:0 10px 30px -18px rgba(0,0,0,.7);
+  }
+  .msg.user{
+    align-self:flex-end; color:var(--text);
+    background:linear-gradient(165deg, rgba(255,176,102,.20), rgba(255,176,102,.08));
+    border:1px solid var(--line-warm); border-bottom-right-radius:6px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    box-shadow:0 12px 32px -18px rgba(255,150,90,.35);
+  }
+  .typing{ align-self:flex-start; display:flex; gap:5px; padding:.9rem 1rem;
+    background:linear-gradient(165deg, rgba(255,240,228,.075), rgba(255,240,228,.035));
+    border:1px solid var(--line); border-radius:18px; border-bottom-left-radius:6px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  .typing i{ width:7px; height:7px; border-radius:50%; background:var(--ember); opacity:.5; animation:blink 1.3s var(--ease) infinite; }
+  .typing i:nth-child(2){ animation-delay:.18s; } .typing i:nth-child(3){ animation-delay:.36s; }
+  @keyframes blink{ 0%,100%{ opacity:.35; transform:translateY(0);} 50%{ opacity:1; transform:translateY(-3px);} }
+  .support{ align-self:stretch; margin:2px 0; padding:1rem 1.1rem; border-radius:16px; border:1px solid var(--line-warm);
+    background:linear-gradient(180deg, rgba(255,176,102,.12), rgba(255,176,102,.05)); color:var(--text); font-size:.94rem; line-height:1.55;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    box-shadow:0 14px 40px -20px rgba(255,150,90,.4); }
+  .support b{ color:var(--ember-core); font-weight:600; }
+  .support .tele{ display:inline-block; margin-top:.5rem; font-family:"Fraunces",serif; font-style:italic; font-size:1.15rem; color:var(--ember-core); }
+  #composer{
+    padding:10px 16px calc(env(safe-area-inset-bottom) + 14px);
+    display:flex; gap:10px; align-items:flex-end;
+  }
+  #box{
+    flex:1; resize:none; max-height:130px;
+    background:rgba(255,255,255,.045); border:1px solid var(--line); border-radius:22px;
+    color:var(--text); font-family:inherit; font-size:1.02rem; line-height:1.4;
+    padding:.8rem 1.05rem; transition:border-color .25s var(--ease), background .25s var(--ease);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  }
+  #box{ overflow-y:auto; scrollbar-width:none; }
+  #box::-webkit-scrollbar{ display:none; }
+  #box::placeholder{ color:var(--faint); }
+  #box:focus{ outline:none; border-color:var(--ember); background:rgba(255,176,102,.05); }
+  #send{
+    flex:0 0 auto; width:46px; height:46px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(180deg, var(--ember-core), var(--ember)); color:var(--night-edge);
+    display:grid; place-items:center; box-shadow:0 8px 26px -10px rgba(255,176,102,.7);
+    transition:transform .2s var(--ease), opacity .2s var(--ease);
+  }
+  #send:active{ transform:scale(.92); }
+  #mic{
+    flex:0 0 auto; width:46px; height:46px; border-radius:50%; cursor:pointer;
+    background:rgba(255,236,222,.10); border:1.5px solid rgba(255,236,222,.35); color:var(--text);
+    display:grid; place-items:center;
+    transition:border-color .2s var(--ease), color .2s var(--ease), background .2s var(--ease), transform .2s var(--ease);
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  }
+  #mic:hover{ border-color:var(--ember); background:rgba(255,176,102,.16); }
+  #mic:active{ transform:scale(.92); }
+  #mic[hidden]{ display:none; }
+  #mic .mic-live{ display:none; }
+  #mic.recording .mic-idle{ display:none; }
+  #mic.recording .mic-live{ display:block; }
+  #mic.recording{
+    border-color:var(--ember-core); color:var(--night-edge);
+    background:linear-gradient(180deg, var(--ember-core), var(--ember));
+    box-shadow:0 8px 26px -10px rgba(255,176,102,.7);
+    animation:micpulse 1.4s var(--ease) infinite;
+  }
+  @keyframes micpulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(255,176,102,.45); }
+    50%{ box-shadow:0 0 0 9px rgba(255,176,102,0); }
+  }
+  #send:disabled{ opacity:.4; box-shadow:none; cursor:default; }
+  #sheet-bg{ position:fixed; inset:0; z-index:20; background:rgba(10,6,8,.6); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
+  #chatsheet-bg{ position:fixed; inset:0; z-index:20; background:rgba(10,6,8,.6); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
+  #chatsheet-bg.open{ opacity:1; pointer-events:auto; }
+  #chatsheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:21; max-width:640px; margin:0 auto;
+    background:linear-gradient(180deg, rgba(58,32,44,.92), rgba(38,21,29,.96));
+    border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
+    padding:20px 20px calc(env(safe-area-inset-bottom) + 20px);
+    max-height:72vh; display:flex; flex-direction:column;
+    transform:translateY(110%); transition:transform .35s var(--ease);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 -20px 60px -20px rgba(0,0,0,.6);
+  }
+  #chatsheet.open{ transform:none; }
+  .chatlist-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.9rem; flex:0 0 auto; }
+  .chatlist-head h3{ font-family:"Fraunces",serif; font-style:italic; font-weight:400; font-size:1.25rem; color:var(--text); }
+  #newchat-btn{
+    appearance:none; border:1px solid var(--line-warm); background:linear-gradient(180deg, rgba(255,176,102,.16), rgba(255,176,102,.06));
+    color:var(--ember-core); font-family:inherit; font-weight:600; font-size:.86rem; padding:.5rem .9rem; border-radius:100px; cursor:pointer;
+  }
+  #incognito-btn{
+    appearance:none; border:1px solid rgba(183,158,149,.35); background:rgba(255,255,255,.03);
+    color:var(--muted); font-family:inherit; font-weight:600; font-size:.86rem; padding:.5rem .9rem; border-radius:100px; cursor:pointer;
+    margin-left:.5rem;
+  }
+  #incognito-btn:hover{ border-color:var(--muted); color:var(--text); }
+  #chatlist{ overflow-y:auto; flex:1 1 auto; display:flex; flex-direction:column; gap:.4rem; margin-bottom:.6rem; }
+  .chatrow{ display:flex; align-items:center; gap:.6rem; padding:.7rem .8rem; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.02); cursor:default; }
+  .chatrow.active{ border-color:var(--line-warm); background:rgba(255,176,102,.07); }
+  .chatrow-main{ flex:1 1 auto; min-width:0; cursor:pointer; }
+  .chatrow-title{ color:var(--text); font-size:.94rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chatrow-date{ color:var(--faint); font-size:.76rem; margin-top:.15rem; }
+  .chatrow-del{ appearance:none; background:none; border:none; color:var(--faint); cursor:pointer; padding:.35rem; border-radius:8px; flex:0 0 auto; transition:color .2s; }
+  .chatrow-del:hover{ color:var(--rose); }
+  #feedbacksheet-bg{ position:fixed; inset:0; z-index:22; background:rgba(10,6,8,.6); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
+  #feedbacksheet-bg.open{ opacity:1; pointer-events:auto; }
+  #feedbacksheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:23; max-width:640px; margin:0 auto;
+    background:linear-gradient(180deg, rgba(58,32,44,.92), rgba(38,21,29,.96));
+    border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
+    padding:22px 22px calc(env(safe-area-inset-bottom) + 24px);
+    transform:translateY(110%); transition:transform .35s var(--ease);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 -20px 60px -20px rgba(0,0,0,.6);
+  }
+  #feedbacksheet.open{ transform:none; }
+  #feedbacksheet h3{ font-family:"Fraunces",serif; font-style:italic; font-weight:400; font-size:1.25rem; color:var(--text); margin-bottom:.4rem; }
+  .fb-sub{ color:var(--muted); font-size:.88rem; line-height:1.5; margin-bottom:.9rem; }
+  .fb-textarea{ resize:none; margin-bottom:.7rem; }
+  #feedback-status{ font-size:.86rem; color:var(--ember-core); margin-bottom:.7rem; }
+  #sheet-bg.open{ opacity:1; pointer-events:auto; }
+  #sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:21; max-width:640px; margin:0 auto;
+    background:linear-gradient(180deg, rgba(58,32,44,.92), rgba(38,21,29,.96));
+    border-top:1px solid var(--line-warm); border-radius:22px 22px 0 0;
+    padding:22px 22px calc(env(safe-area-inset-bottom) + 24px);
+    transform:translateY(110%); transition:transform .35s var(--ease);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 -20px 60px -20px rgba(0,0,0,.6);
+  }
+  #sheet.open{ transform:none; }
+  #sheet h3{ font-family:"Fraunces",serif; font-style:italic; font-weight:400; font-size:1.4rem; margin-bottom:.7rem; color:var(--text); }
+  #sheet p{ color:var(--muted); font-size:.92rem; line-height:1.6; margin-bottom:.7rem; }
+  #sheet p b{ color:var(--text); font-weight:600; }
+  #sheet .close{ margin-top:.6rem; appearance:none; border:1px solid var(--line); background:none; color:var(--muted); font-family:inherit; font-size:.95rem; padding:.7rem 1.3rem; border-radius:100px; cursor:pointer; }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; }
+    #space, #space3d{ display:none; }
+    #authbox{ transition:none; transform:none !important; }
+  }  /* ---------- incognito mode: cool, muted theme + drifting ghosts ---------- */
+  body.incognito-mode #glow{ opacity:.18; }
+  body.incognito-mode #space,
+  body.incognito-mode #space3d{ filter:grayscale(1) brightness(.5) contrast(1.05); }
+  body.incognito-mode header .brand,
+  body.incognito-mode header .bdot{ filter:grayscale(1) brightness(.85); }
+
+  #incognito-ghosts{
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    opacity:0; transition:opacity .7s var(--ease);
+  }
+  body.incognito-mode #incognito-ghosts{ opacity:1; }
+
+  .ighost{
+    position:absolute; bottom:-60px;
+    animation-name: ighost-rise, ighost-sway;
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: infinite, infinite;
+    opacity:.8;
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
+  }
+  @keyframes ighost-rise{
+    0%{ transform: translateY(0); opacity:0; }
+    8%{ opacity:.8; }
+    88%{ opacity:.8; }
+    100%{ transform: translateY(-115vh); opacity:0; }
+  }
+  @keyframes ighost-sway{
+    0%,100%{ margin-left:0; }
+    50%{ margin-left:22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ighost{ animation:none; opacity:.5; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="space" aria-hidden="true"></canvas>
+  <canvas id="space3d" aria-hidden="true"></canvas>
+
+  <!-- incognito mode: drifting ghosts, shown only while an incognito chat is active -->
+  <div id="incognito-ghosts" aria-hidden="true">
+    <svg class="ighost" style="left:8%;  width:46px; animation-duration:14s, 4.2s; animation-delay:0s, 0s;"    viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".92"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+    <svg class="ighost" style="left:22%; width:30px; animation-duration:11s, 3.1s; animation-delay:2.5s, .4s;" viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".78"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+    <svg class="ighost" style="left:38%; width:54px; animation-duration:17s, 5s;   animation-delay:5s, 1s;"    viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".85"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+    <svg class="ighost" style="left:56%; width:34px; animation-duration:12.5s, 3.6s; animation-delay:1.2s, .8s;" viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".8"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+    <svg class="ighost" style="left:72%; width:42px; animation-duration:15.5s, 4.6s; animation-delay:3.8s, .2s;" viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".9"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+    <svg class="ighost" style="left:86%; width:26px; animation-duration:10s, 2.8s;  animation-delay:6.5s, .6s;" viewBox="0 0 64 72" fill="none"><path d="M32 2C15 2 6 16 6 34v28c0 2 2 3 4 1l6-6 6 6c1 1 3 1 4 0l6-6 6 6c1 1 3 1 4 0l6-6 6 6c2 2 4 1 4-1V34C58 16 49 2 32 2Z" fill="#F5ECE4" fill-opacity=".72"/><circle cx="23" cy="30" r="3.4" fill="#2A1820"/><circle cx="41" cy="30" r="3.4" fill="#2A1820"/></svg>
+  </div>
+  <div id="glow" aria-hidden="true"></div>
+
+  <div id="authscreen">
+    <div id="authbox">
+      <div class="brand" style="justify-content:center; margin-bottom:.3rem;"><span class="bdot"></span>Mitra</div>
+      <p id="auth-sub">your late-night friend</p>
+      <p id="auth-welcome">Sign in, and I'll remember you next time & your chats will be right where you left them.</p>
+      <div id="auth-error" class="auth-error" hidden></div>
+      <input id="auth-email" class="auth-input" type="email" autocomplete="email" placeholder="email" />
+      <input id="auth-password" class="auth-input" type="password" autocomplete="current-password" placeholder="password" />
+      <button id="auth-submit" class="cta">log in</button>
+      <div class="auth-links">
+        <button id="auth-toggle" class="linkbtn">new here? sign up</button>
+        <button id="auth-forgot" class="linkbtn">forgot password?</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app" hidden>
+    <header>
+      <button id="chatlist-btn" aria-label="Your chats">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      </button>
+      <span class="brand"><span class="bdot"></span>Mitra</span>
+      <span class="brand-sub">your late-night friend</span>
+      <button id="info" aria-label="How this works">i</button>
+      <button id="ar-btn" aria-label="View AR avatar" onclick="location.href='ar.html'">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+      </button>
+    </header>
+    <div id="thread" aria-live="polite"></div>
+    <div id="composer">
+      <textarea id="box" rows="1" placeholder="type whatever's on your mind..." maxlength="1500"></textarea>
+      <button id="mic" aria-label="Speak instead of typing" hidden>
+        <svg class="mic-idle" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+        <svg class="mic-live" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <rect x="6" y="6" width="12" height="12" rx="3"/>
+        </svg>
+      </button>
+      <button id="send" aria-label="Send">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="sheet-bg"></div>
+  <div id="sheet">
+    <h3>just so you know 🌙</h3>
+    <p><b>Your chats are saved to your own private account</b> so they're right where you left them, even on a new device. Only you can see them in the app. Delete a chat and it's gone from our records for real.</p>
+    <p>To reply, your messages are sent to an AI over a secure connection. They're used only to write back to you, and we don't read your conversations.</p>
+    <p>We count a few basic usage signals, like whether people come back, to know if Mitra is actually helping. Never the content of what you say.</p>
+    <p style="color:var(--faint); font-size:.82rem;">I'm a friend to talk to, not a therapist or doctor. If things feel heavy, talking to someone you trust — or Tele-MANAS (<a href="tel:14416" style="color:var(--ember-core); text-decoration:none; border-bottom:1px dashed var(--ember-core);">14416</a>, free, 24×7) — can really help.</p>
+    <button class="close" id="sheet-close">okay</button>
+    <button class="linkbtn" id="feedback-open" style="display:block; margin:.9rem auto 0;">suggest something / tell us what's off</button>
+    <button class="linkbtn" id="wipe-btn" style="display:block; margin:.5rem auto 0;">delete all my chats</button>
+    <button class="linkbtn" id="logout-btn" style="display:block; margin:.5rem auto 0;">log out</button>
+  </div>
+
+  <div id="chatsheet-bg"></div>
+  <div id="chatsheet">
+    <div class="chatlist-head">
+      <h3>your chats</h3>
+      <div>
+        <button id="newchat-btn">+ new chat</button>
+        <button id="incognito-btn" title="Starts a chat that's never saved anywhere">🕶 incognito</button>
+      </div>
+    </div>
+    <div id="chatlist"></div>
+    <button class="close" id="chatsheet-close">close</button>
+  </div>
+
+  <div id="feedbacksheet-bg"></div>
+  <div id="feedbacksheet">
+    <h3>tell us something 💛</h3>
+    <p class="fb-sub">Something feel off? Got an idea? I actually read these — no essay needed.</p>
+    <textarea id="feedback-text" class="auth-input fb-textarea" rows="4" maxlength="2000" placeholder="type your thought here..."></textarea>
+    <div id="feedback-status" hidden></div>
+    <button class="cta" id="feedback-send">send it</button>
+    <button class="close" id="feedbacksheet-close">close</button>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) return;
+  var css = getComputedStyle(document.documentElement);
+  function cvar(name, fallback){ var v = css.getPropertyValue(name).trim(); return v || fallback; }
+  var COLORS = {
+    emberCore: cvar("--ember-core", "#FFD3A0"),
+    ember:     cvar("--ember",      "#FFB877"),
+    emberDeep: cvar("--ember-deep", "#F0925A"),
+    rose:      cvar("--rose",       "#E89BA8"),
+    text:      cvar("--text",       "#F5ECE4")
+  };
+  function hexToRgb(hex){
+    var h = hex.replace("#","");
+    return { r: parseInt(h.substr(0,2),16), g: parseInt(h.substr(2,2),16), b: parseInt(h.substr(4,2),16) };
+  }
+  function init2D(canvas){
+    var ctx = canvas.getContext("2d");
+    function makeSprite(hex){
+      var c = hexToRgb(hex);
+      var s = document.createElement("canvas"); s.width = s.height = 64;
+      var g = s.getContext("2d");
+      var grad = g.createRadialGradient(32,32,0, 32,32,32);
+      grad.addColorStop(0,  "rgba("+c.r+","+c.g+","+c.b+",1)");
+      grad.addColorStop(.35,"rgba("+c.r+","+c.g+","+c.b+",.45)");
+      grad.addColorStop(1,  "rgba("+c.r+","+c.g+","+c.b+",0)");
+      g.fillStyle = grad; g.fillRect(0,0,64,64);
+      return s;
+    }
+    var SPRITES = [makeSprite(COLORS.emberCore), makeSprite(COLORS.ember), makeSprite(COLORS.emberDeep), makeSprite(COLORS.rose)];
+    var DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+    var FOV = 320, DEPTH = 900;
+    var W=0, H=0, CX=0, CY=0, particles = [];
+    function newParticle(){
+      return {
+        x:(Math.random()*2-1)*W*.7, y:(Math.random()*2-1)*H*.7, z:Math.random()*DEPTH,
+        r:1.4+Math.random()*2.6, v:.12+Math.random()*.4,
+        sway:Math.random()*Math.PI*2, swaySpeed:.002+Math.random()*.004,
+        sprite:SPRITES[Math.random()<.12 ? 3 : Math.floor(Math.random()*3)],
+        tw:Math.random()*Math.PI*2
+      };
+    }
+    function resize(){
+      W = canvas.width  = Math.floor(innerWidth*DPR);
+      H = canvas.height = Math.floor(innerHeight*DPR);
+      canvas.style.width = innerWidth+"px"; canvas.style.height = innerHeight+"px";
+      CX = W/2; CY = H*.42;
+      var count = Math.min(90, Math.floor(innerWidth*innerHeight/14000));
+      particles = []; for (var i=0;i<count;i++) particles.push(newParticle());
+    }
+    var running = false, raf = 0;
+    function loop(){
+      if (!running) return;
+      raf = requestAnimationFrame(loop);
+      ctx.clearRect(0,0,W,H);
+      for (var i=0;i<particles.length;i++){
+        var p = particles[i];
+        p.z -= p.v; p.sway += p.swaySpeed; p.tw += .02;
+        if (p.z <= 1){ var np = newParticle(); np.z = DEPTH; particles[i] = np; continue; }
+        var scale = FOV/(FOV+p.z);
+        var sx = CX + (p.x + Math.sin(p.sway)*26)*scale;
+        var sy = CY + (p.y + Math.cos(p.sway*.8)*18)*scale;
+        if (sx<-40||sx>W+40||sy<-40||sy>H+40) continue;
+        var size = p.r*scale*7*DPR;
+        var alpha = Math.min(.85, scale*1.1)*(.7+.3*Math.sin(p.tw));
+        ctx.globalAlpha = alpha*.85;
+        ctx.drawImage(p.sprite, sx-size/2, sy-size/2, size, size);
+      }
+      ctx.globalAlpha = 1;
+    }
+    function onVis(){ if (document.hidden){ cancelAnimationFrame(raf); } else if (running){ loop(); } }
+    return {
+      start: function(){
+        if (running) return;
+        running = true;
+        resize();
+        addEventListener("resize", resize, { passive:true });
+        document.addEventListener("visibilitychange", onVis);
+        loop();
+        canvas.style.display = "";
+      },
+      stop: function(){
+        running = false;
+        cancelAnimationFrame(raf);
+        removeEventListener("resize", resize);
+        document.removeEventListener("visibilitychange", onVis);
+        ctx.clearRect(0,0,W,H);
+        canvas.style.display = "none";
+      }
+    };
+  }
+  var canvas2d = document.getElementById("space");
+  var canvas3d = document.getElementById("space3d");
+  var bg2d = init2D(canvas2d);
+  bg2d.start();
+  function webglSupported(){
+    try {
+      var c = document.createElement("canvas");
+      return !!(window.WebGLRenderingContext && (c.getContext("webgl") || c.getContext("experimental-webgl")));
+    } catch(e){ return false; }
+  }
+  var looksLowEnd =
+    (navigator.deviceMemory && navigator.deviceMemory <= 2) ||
+    (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) ||
+    (navigator.connection && /(^|-)2g/.test(navigator.connection.effectiveType || ""));
+  if (!webglSupported() || looksLowEnd) return;
+  function loadThree(){
+    return new Promise(function(resolve, reject){
+      if (window.THREE) return resolve();
+      var s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+      s.async = true;
+      s.onload = function(){ resolve(); };
+      s.onerror = function(){ reject(new Error("three.js failed to load")); };
+      document.head.appendChild(s);
+      setTimeout(function(){ reject(new Error("three.js load timeout")); }, 15000);
+    });
+  }
+  function whenIdle(cb){
+    if ("requestIdleCallback" in window) requestIdleCallback(cb, { timeout: 3000 });
+    else setTimeout(cb, 1500);
+  }
+  function afterLoad(cb){
+    if (document.readyState === "complete") whenIdle(cb);
+    else addEventListener("load", function(){ whenIdle(cb); }, { once:true });
+  }
+  afterLoad(function(){
+    loadThree().then(init3D).catch(function(){});
+  });
+  function init3D(){
+    var THREE = window.THREE;
+    var renderer, scene, camera, disposed = false;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas: canvas3d, alpha: true, antialias: false, powerPreference: "low-power"
+      });
+    } catch(e){ return; }
+    var DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+    renderer.setPixelRatio(DPR);
+    renderer.setClearColor(0x000000, 0);
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, .1, 120);
+    camera.position.set(0, 2, 18);
+    function sizeIt(){
+      renderer.setSize(innerWidth, innerHeight, false);
+      camera.aspect = innerWidth/innerHeight;
+      camera.updateProjectionMatrix();
+    }
+    sizeIt();
+    function glowTexture(hex, innerStop){
+      var c = hexToRgb(hex);
+      var cnv = document.createElement("canvas"); cnv.width = cnv.height = 128;
+      var g = cnv.getContext("2d");
+      var grad = g.createRadialGradient(64,64,0, 64,64,64);
+      grad.addColorStop(0,  "rgba("+c.r+","+c.g+","+c.b+",1)");
+      grad.addColorStop(innerStop || .3, "rgba("+c.r+","+c.g+","+c.b+",.42)");
+      grad.addColorStop(1,  "rgba("+c.r+","+c.g+","+c.b+",0)");
+      g.fillStyle = grad; g.fillRect(0,0,128,128);
+      var tex = new THREE.CanvasTexture(cnv);
+      tex.needsUpdate = true;
+      return tex;
+    }
+    var orb = new THREE.Group();
+    var orbLayers = [
+      { tex: glowTexture(COLORS.emberCore, .18), scale: 5.5, op: .55 },
+      { tex: glowTexture(COLORS.ember,     .28), scale: 9.5, op: .30 },
+      { tex: glowTexture(COLORS.emberDeep, .35), scale: 15,  op: .16 },
+      { tex: glowTexture(COLORS.rose,      .40), scale: 20,  op: .07 }
+    ];
+    var orbSprites = orbLayers.map(function(l){
+      var m = new THREE.SpriteMaterial({ map: l.tex, transparent: true, opacity: l.op,
+        blending: THREE.AdditiveBlending, depthWrite: false });
+      var sp = new THREE.Sprite(m);
+      sp.scale.set(l.scale, l.scale, 1);
+      sp.userData.base = l.scale;
+      orb.add(sp);
+      return sp;
+    });
+    orb.position.set(0, 5.2, -6);
+    scene.add(orb);
+    function makeEmbers(count, hex, size, spread){
+      var geo = new THREE.BufferGeometry();
+      var pos = new Float32Array(count*3);
+      var data = [];
+      for (var i=0;i<count;i++){
+        var x = (Math.random()*2-1)*spread.x;
+        var y = -8 + Math.random()*20;
+        var z = -2 - Math.random()*spread.z;
+        pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=z;
+        data.push({
+          v: .28 + Math.random()*.5,
+          sway: Math.random()*Math.PI*2,
+          swaySpeed: .18 + Math.random()*.3,
+          baseX: x
+        });
+      }
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      var mat = new THREE.PointsMaterial({
+        map: glowTexture(hex, .25), size: size, sizeAttenuation: true,
+        transparent: true, opacity: .8, blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      var pts = new THREE.Points(geo, mat);
+      pts.userData = { data: data, count: count };
+      scene.add(pts);
+      return pts;
+    }
+    var embersA = makeEmbers(60, COLORS.ember,     .45, { x: 14, z: 16 });
+    var embersB = makeEmbers(40, COLORS.emberDeep, .6,  { x: 16, z: 24 });
+    function makeStars(count, hex, size, minZ, maxZ, opacity){
+      var geo = new THREE.BufferGeometry();
+      var pos = new Float32Array(count*3);
+      for (var i=0;i<count;i++){
+        pos[i*3]   = (Math.random()*2-1)*45;
+        pos[i*3+1] = (Math.random()*2-1)*30;
+        pos[i*3+2] = -(minZ + Math.random()*(maxZ-minZ));
+      }
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      var mat = new THREE.PointsMaterial({
+        map: glowTexture(hex, .2), size: size, sizeAttenuation: true,
+        transparent: true, opacity: opacity, blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      var pts = new THREE.Points(geo, mat);
+      scene.add(pts);
+      return pts;
+    }
+    var starsNear = makeStars(90,  COLORS.text, .28, 18, 32, .35);
+    var starsFar  = makeStars(130, COLORS.text, .2,  32, 60, .25);
+    var clock = new THREE.Clock();
+    var running = true, raf = 0;
+    var probeFrames = 0, probeTime = 0, probeSkip = 60, probeDone = false;
+    var PROBE_SAMPLE = 180;
+    var MIN_FPS = 28;
+    var twoDStopped = false;
+    function teardown(){
+      if (disposed) return;
+      disposed = true; running = false;
+      cancelAnimationFrame(raf);
+      canvas3d.classList.remove("on");
+      scene.traverse(function(o){
+        if (o.material){ if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
+        if (o.geometry) o.geometry.dispose();
+      });
+      renderer.dispose();
+      if (twoDStopped) bg2d.start();
+    }
+    canvas3d.addEventListener("webglcontextlost", function(e){ e.preventDefault(); teardown(); }, false);
+    function promote(){
+      canvas3d.classList.add("on");
+      setTimeout(function(){
+        if (disposed) return;
+        bg2d.stop();
+        twoDStopped = true;
+      }, 1500);
+    }
+    function onVis(){
+      if (document.hidden){ running = false; cancelAnimationFrame(raf); }
+      else if (!disposed){ running = true; clock.getDelta(); loop(); }
+    }
+    document.addEventListener("visibilitychange", onVis);
+    addEventListener("resize", sizeIt, { passive:true });
+    function loop(){
+      if (!running || disposed) return;
+      raf = requestAnimationFrame(loop);
+      var dt = Math.min(clock.getDelta(), .05);
+      var t = clock.elapsedTime;
+      if (!probeDone){
+        if (probeSkip > 0){ probeSkip--; }
+        else {
+          probeFrames++; probeTime += dt;
+          if (probeFrames >= PROBE_SAMPLE){
+            probeDone = true;
+            var fps = probeFrames / probeTime;
+            if (fps < MIN_FPS){ teardown(); return; }
+            promote();
+          }
+        }
+      }
+      var breathe = 1 + .07 * Math.sin(t * (Math.PI*2/6.5));
+      for (var i=0;i<orbSprites.length;i++){
+        var sp = orbSprites[i];
+        sp.scale.set(sp.userData.base*breathe, sp.userData.base*breathe, 1);
+      }
+      [embersA, embersB].forEach(function(sys){
+        var posAttr = sys.geometry.getAttribute("position");
+        var arr = posAttr.array, data = sys.userData.data;
+        for (var i=0;i<sys.userData.count;i++){
+          var d = data[i];
+          d.sway += d.swaySpeed*dt;
+          arr[i*3+1] += d.v*dt;
+          arr[i*3]   = d.baseX + Math.sin(d.sway)*.8;
+          if (arr[i*3+1] > 13){
+            arr[i*3+1] = -9;
+            d.baseX = (Math.random()*2-1)*15;
+            arr[i*3] = d.baseX;
+          }
+        }
+        posAttr.needsUpdate = true;
+      });
+      camera.position.x = Math.sin(t*.05)*.55;
+      camera.position.y = 2 + Math.cos(t*.037)*.35;
+      camera.lookAt(0, 4.2, -6);
+      starsNear.material.opacity = .3 + .08*Math.sin(t*.7);
+      starsFar.material.opacity  = .22 + .05*Math.sin(t*.53 + 1.7);
+      renderer.render(scene, camera);
+    }
+    loop();
+  }
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var box = document.getElementById("authbox");
+  var screen = document.getElementById("authscreen");
+  if (!box || !screen) return;
+  screen.addEventListener("pointermove", function(e){
+    if (screen.hidden) return;
+    var rect = box.getBoundingClientRect();
+    var dx = (e.clientX - rect.left - rect.width/2) / rect.width;
+    var dy = (e.clientY - rect.top - rect.height/2) / rect.height;
+    box.style.transform = "rotateY(" + (dx*5) + "deg) rotateX(" + (dy*-5) + "deg)";
+  }, { passive:true });
+  screen.addEventListener("pointerleave", function(){ box.style.transform = ""; }, { passive:true });
+})();
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+  import { getFirestore, collection, addDoc, doc, setDoc, getDocs, deleteDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+  import {
+    getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, sendPasswordResetEmail
+  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBxO9Be3Gln4k6RMnFNMM8JCLwBKa_v9ZQ",
+    authDomain: "mitra-chat-fdc4a.firebaseapp.com",
+    projectId: "mitra-chat-fdc4a",
+    storageBucket: "mitra-chat-fdc4a.firebasestorage.app",
+    messagingSenderId: "1095624201719",
+    appId: "1:1095624201719:web:f6bbec13ca14fdf4194af2"
+  };
+
+  window.__mitraEvent = function(){};
+  if (!String(firebaseConfig.apiKey).includes("PASTE")) {
+    try {
+      const app = initializeApp(firebaseConfig);
+      const db  = getFirestore(app);
+      const auth = getAuth(app);
+
+      window.__mitraEvent = async function(payload){
+        try { await addDoc(collection(db, "mitra_events"), Object.assign({}, payload, { _ts: serverTimestamp() })); }
+        catch(e){ }
+      };
+
+      function friendly(err){
+        const c = (err && err.code) || "";
+        const map = {
+          "auth/email-already-in-use": "That email's already registered — try logging in instead.",
+          "auth/invalid-email": "That doesn't look like a valid email.",
+          "auth/weak-password": "Password should be at least 6 characters.",
+          "auth/user-not-found": "No account found with that email.",
+          "auth/wrong-password": "That password doesn't match.",
+          "auth/invalid-credential": "Email or password is incorrect.",
+          "auth/too-many-requests": "Too many attempts — try again in a bit.",
+        };
+        return map[c] || "Something went wrong. Try again?";
+      }
+
+      window.__mitraOnAuthChange = function(cb){ onAuthStateChanged(auth, (user) => cb(user ? { uid: user.uid, email: user.email } : null)); };
+      window.__mitraSignUp = async function(email, password){
+        try { const cred = await createUserWithEmailAndPassword(auth, email, password); return { ok:true, uid: cred.user.uid }; }
+        catch(e){ return { ok:false, error: friendly(e) }; }
+      };
+      window.__mitraLogIn = async function(email, password){
+        try { const cred = await signInWithEmailAndPassword(auth, email, password); return { ok:true, uid: cred.user.uid }; }
+        catch(e){ return { ok:false, error: friendly(e) }; }
+      };
+      window.__mitraLogOut = async function(){ try { await signOut(auth); return { ok:true }; } catch(e){ return { ok:false, error: friendly(e) }; } };
+      window.__mitraGetIdToken = async function(){
+        const user = auth.currentUser;
+        if (!user) return null;
+        try { return await user.getIdToken(); } catch(e){ return null; }
+      };
+      window.__mitraResetPassword = async function(email){
+        try { await sendPasswordResetEmail(auth, email); return { ok:true }; }
+        catch(e){ return { ok:false, error: friendly(e) }; }
+      };
+
+      window.__mitraLoadChats = async function(uid){
+        try {
+          const snap = await getDocs(collection(db, "users", uid, "chats"));
+          const out = {};
+          snap.forEach((d) => { out[d.id] = d.data(); });
+          return out;
+        } catch(e){ console.error("Mitra: loadChats failed", e); return {}; }
+      };
+      window.__mitraSaveChat = async function(uid, chatId, chatData){
+        try { await setDoc(doc(db, "users", uid, "chats", chatId), chatData); return true; }
+        catch(e){ console.error("Mitra: saveChat failed", e); return false; }
+      };
+      window.__mitraDeleteChat = async function(uid, chatId){
+        try { await deleteDoc(doc(db, "users", uid, "chats", chatId)); return true; }
+        catch(e){ console.error("Mitra: deleteChat failed", e); return false; }
+      };
+
+      window.__mitraSendFeedback = async function(uid, text){
+        try {
+          await addDoc(collection(db, "feedback"), { uid: uid || null, text, createdAt: serverTimestamp() });
+          return { ok:true };
+        } catch(e){ console.error("Mitra: sendFeedback failed", e); return { ok:false }; }
+      };
+    } catch(e){ console.error("Mitra: Firebase init failed", e); }
+  }
+</script>
+
+<script type="module">
+import { fetchSessionKey, encryptMessage, decryptMessage } from "./crypto-utils.js";
+(function(){
+  "use strict";
+
+  const API_BASE = "https://mitra-chat-backend.onrender.com";
+  fetch(API_BASE + "/health").catch(()=>{});
+
+  const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const thread = document.getElementById("thread");
+  const box    = document.getElementById("box");
+  const mic    = document.getElementById("mic");
+  const send   = document.getElementById("send");
+  const glow   = document.getElementById("glow");
+
+  let currentUid = null;
+  let sessionKey = null;
+  let chats = {};
+  let activeId = null;
+  let messages = [];
+  let busy = false;
+  let sessionMsgs = 0;
+
+  async function encryptMessages(msgs){
+    if (!sessionKey) { console.warn("Mitra: no session key, saving unencrypted"); return msgs; }
+    const out = [];
+    for (const m of msgs){
+      try { out.push({ role: m.role, content: await encryptMessage(m.content, sessionKey, currentUid) }); }
+      catch(e){ console.error("Mitra: encrypt failed for a message, saving as-is", e); out.push(m); }
+    }
+    return out;
+  }
+
+  async function decryptMessages(msgs){
+    if (!sessionKey) return msgs;
+    const out = [];
+    for (const m of msgs){
+      try { out.push({ role: m.role, content: await decryptMessage(m.content, sessionKey, currentUid) }); }
+      catch(e){ out.push(m); }
+    }
+    return out;
+  }
+
+  function makeId(){ return "c_" + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+  function makeChat(seedMessages){
+    const now = new Date().toISOString();
+    const c = { id: makeId(), createdAt: now, updatedAt: now, title: "", messages: seedMessages || [] };
+    chats[c.id] = c;
+    return c;
+  }
+  function titleFor(c){
+    if (c.title) return c.title;
+    const u = c.messages.find(m => m.role === "user" && (m.content||"").trim());
+    return u ? u.content.trim().slice(0, 42) : "New chat";
+  }
+  function relDate(iso){
+    const d = new Date(iso), now = new Date();
+    if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    const y = new Date(now); y.setDate(now.getDate()-1);
+    if (d.toDateString() === y.toDateString()) return "Yesterday";
+    return d.toLocaleDateString([], {day:"numeric", month:"short"});
+  }
+  function mostRecentId(){
+    const ids = Object.keys(chats);
+    if (!ids.length) return null;
+    ids.sort((a,b) => new Date(chats[b].updatedAt) - new Date(chats[a].updatedAt));
+    return ids[0];
+  }
+
+  async function persistActive(){
+    if (!currentUid || !activeId || !chats[activeId]) return;
+    const c = chats[activeId];
+    c.messages = messages;
+    c.updatedAt = new Date().toISOString();
+    if (!c.title) c.title = titleFor(c);
+    if (c._incognito) return;   // never written anywhere — stays in memory only, gone on tab close/switch
+    if (window.__mitraSaveChat){
+      const toSave = Object.assign({}, c, { messages: await encryptMessages(c.messages) });
+      await window.__mitraSaveChat(currentUid, activeId, toSave);
+    }
+  }
+  function save(){ persistActive(); }
+
+  function id(){ return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+  let deviceId = localStorage.getItem("mitra_device");
+  const isReturn = !!deviceId;
+  if (!deviceId){ deviceId = id(); localStorage.setItem("mitra_device", deviceId); }
+  const sessionId = id();
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  function ev(type, extra){ if (window.__mitraEvent) window.__mitraEvent(Object.assign({ type, deviceId, sessionId, isReturn, tz, uid: currentUid }, extra||{})); }
+
+  function render(){
+    thread.innerHTML = "";
+    for (const m of messages) bubble(m.role, m.content);
+    scroll();
+  }
+  function bubble(role, text){
+    const el = document.createElement("div");
+    el.className = "msg " + (role === "user" ? "user" : "mitra");
+    el.textContent = text;
+    thread.appendChild(el);
+    return el;
+  }
+  function scroll(){ requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; }); }
+
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function greetingLine(){
+    const h = new Date().getHours();
+    if (h >= 0 && h < 5) return pick([
+      "Hey. It's pretty late... couldn't sleep? I'm here if you want to talk.",
+      "It's that quiet 3am kind of hour. I'm awake too, in a way. What's keeping you up?",
+      "Still up? Same. I'm around if you want to talk about whatever's on your mind.",
+      "Late night, huh. I'm here — what's going on?",
+    ]);
+    if (h >= 5 && h < 12) return pick([
+      "Morning 🌅 how are you actually feeling as you start the day?",
+      "Hey, good morning. Before the day gets busy — how are you, really?",
+      "Morning! Fresh start. How are you feeling today?",
+      "New day. How's it looking from where you are?",
+    ]);
+    if (h >= 12 && h < 17) return pick([
+      "Hey. What's been going on with you today?",
+      "Hey, taking a break? What's going on with you today?",
+      "Middle of the day check-in — how's everything going?",
+      "How's the day treating you so far?",
+    ]);
+    if (h >= 17 && h < 22) return pick([
+      "Evening. That quiet hour when things settle down. How was your day, really?",
+      "Hey, evening. Things usually get quieter around now. What's on your mind?",
+      "Evening's here. How are you holding up today?",
+      "Day's winding down. How did it go, honestly?",
+    ]);
+    return pick([
+      "Hey, you're up late too. I'm around if you feel like talking.",
+      "Late night thoughts hitting? I'm around, talk to me.",
+      "Hey. Everyone else's probably asleep, but I'm not. What's up?",
+      "Night's gotten quiet. I'm here if you want company for a bit.",
+    ]);
+  }
+  function returnLine(){
+    return pick([
+      "Hey, you're back 🌙 I was thinking about our last chat. How have you been since?",
+      "You're back. I missed this — how's everything been?",
+      "Hey, good to see you again. What's new since we last talked?",
+      "Welcome back 🌙 how have things been?",
+    ]);
+  }
+
+  function applyIncognitoTheme(){
+    const isIncognito = activeId && chats[activeId] && chats[activeId]._incognito;
+    document.body.classList.toggle("incognito-mode", !!isIncognito);
+  }
+
+  // Incognito chats live only in the in-memory `chats` object. If we switch
+  // away from one, drop it entirely — otherwise it would just sit in memory
+  // for the rest of the session, which defeats "not saved anywhere."
+  function discardIncognitoIfActive(){
+    if (activeId && chats[activeId] && chats[activeId]._incognito){
+      delete chats[activeId];
+    }
+  }
+
+  function switchChat(newId){
+    if (!chats[newId] || newId === activeId){ closeChats(); return; }
+    discardIncognitoIfActive();
+    activeId = newId;
+    messages = chats[activeId].messages;
+    supportShown = false;
+    render();
+    applyIncognitoTheme();
+    closeChats();
+  }
+  function newChat(){
+    discardIncognitoIfActive();
+    const c = makeChat([{ role:"mitra", content: greetingLine() }]);
+    activeId = c.id;
+    messages = chats[activeId].messages;
+    persistActive();
+    supportShown = false;
+    render();
+    applyIncognitoTheme();
+    closeChats();
+    ev("new_chat");
+  }
+  function newIncognitoChat(){
+    discardIncognitoIfActive();
+    const c = makeChat([{ role:"mitra", content: greetingLine() }]);
+    c._incognito = true;
+    activeId = c.id;
+    messages = chats[activeId].messages;
+    // no persistActive() call — nothing to save, this chat never touches Firestore
+    supportShown = false;
+    render();
+    applyIncognitoTheme();
+    closeChats();
+    ev("new_incognito_chat");
+  }
+  async function deleteChat(delId){
+    const wasActive = delId === activeId;
+    delete chats[delId];
+    if (window.__mitraDeleteChat && currentUid) await window.__mitraDeleteChat(currentUid, delId);
+    if (wasActive){
+      const nextId = mostRecentId();
+      if (nextId){
+        activeId = nextId;
+        messages = chats[activeId].messages;
+        render();
+        applyIncognitoTheme();
+          } else {
+        newChat();
+        return;
+      }
+    }
+    renderChatList();
+  }
+  function renderChatList(){
+    const wrap = document.getElementById("chatlist");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    const ids = Object.keys(chats)
+      .filter((cid) => !chats[cid]._incognito)
+      .sort((a,b) => new Date(chats[b].updatedAt) - new Date(chats[a].updatedAt));
+    ids.forEach((cid) => {
+      const c = chats[cid];
+      const row = document.createElement("div");
+      row.className = "chatrow" + (cid === activeId ? " active" : "");
+      const main = document.createElement("div");
+      main.className = "chatrow-main";
+      const t = document.createElement("div"); t.className = "chatrow-title"; t.textContent = titleFor(c);
+      const d = document.createElement("div"); d.className = "chatrow-date"; d.textContent = relDate(c.updatedAt);
+      main.appendChild(t); main.appendChild(d);
+      main.addEventListener("click", () => switchChat(cid));
+      const del = document.createElement("button");
+      del.className = "chatrow-del"; del.setAttribute("aria-label","Delete chat");
+      del.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>';
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (confirm("Delete this chat? This can't be undone.")) deleteChat(cid);
+      });
+      row.appendChild(main); row.appendChild(del);
+      wrap.appendChild(row);
+    });
+  }
+
+  function boot(){
+    render();
+    applyIncognitoTheme();
+    const c = chats[activeId];
+    const hasHistory = c && c.messages && c.messages.length > 1;
+    if (!hasHistory){
+      ev("first_open");
+      return;
+    }
+    const lastTs = c.updatedAt ? new Date(c.updatedAt).getTime() : 0;
+    const gapHrs = (Date.now() - lastTs) / 36e5;
+    if (gapHrs > 3){
+      const r = returnLine();
+      setTimeout(() => {
+        messages.push({ role:"mitra", content: r });
+        save(); bubble("mitra", r); scroll();
+      }, 500);
+    }
+    ev("return_open");
+  }
+
+  const CRISIS = [
+    "kill myself","want to die","end my life","end it all","don't want to live","dont want to live",
+    "no reason to live","better off dead","suicide","suicidal","self harm","self-harm","hurt myself",
+    "harm myself","cut myself","cutting myself","can't go on","cant go on","give up on life",
+    "marna hai","mar jau","mar jaunga","mar jaungi","jeena nahi","jeene ka mann nahi","khatam kar",
+    "zindagi khatam","apne aap ko"
+  ];
+  let supportShown = false;
+  function maybeSupport(text){
+    const t = text.toLowerCase();
+    if (supportShown) return;
+    if (CRISIS.some(k => t.includes(k))){
+      supportShown = true;
+      const card = document.createElement("div");
+      card.className = "support";
+      card.innerHTML = "It sounds like you're carrying something really heavy right now — and I'm really glad you said it out loud. You're not alone in this, and I'm right here with you. "
+        + "If it would help to talk to someone who's trained for exactly this, <b>Tele-MANAS</b> is free, 24×7, and there's no judgement:"
+        + "<a class='tele' href='tel:14416' style='color:var(--ember-core); text-decoration:none; border-bottom:1px dashed var(--ember-core);'>dial 14416</a>";
+      thread.appendChild(card); scroll();
+      ev("support_shown");
+    }
+  }
+
+  async function sendMessage(){
+    const text = box.value.trim();
+    if (!text || busy) return;
+
+    if (!navigator.onLine){
+      bubble("mitra", "Looks like your internet dropped for a moment. I'm right here — your message is safe in the box, send it once you're back online. 🌙");
+      scroll();
+      return;
+    }
+
+    messages.push({ role:"user", content:text });
+    bubble("user", text);
+    box.value = ""; autosize();
+    save(); scroll();
+    sessionMsgs++;
+    ev("msg", { n: sessionMsgs });
+    maybeSupport(text);
+
+    busy = true; send.disabled = true;
+    glow.classList.add("thinking");
+
+    const typing = document.createElement("div");
+    typing.className = "typing"; typing.innerHTML = "<i></i><i></i><i></i>";
+    thread.appendChild(typing); scroll();
+
+    let mitraEl = null, acc = "";
+    try {
+      let resp = null;
+      try {
+        resp = await fetch(API_BASE + "/chat", {
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ messages })
+        });
+      } catch(_){ resp = null; }
+      if (!resp || !resp.ok){
+        await new Promise(r => setTimeout(r, 3500));
+        resp = await fetch(API_BASE + "/chat", {
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ messages })
+        });
+      }
+      if (!resp.ok || !resp.body) throw new Error("bad response");
+
+      const reader = resp.body.getReader();
+      const dec = new TextDecoder();
+      while (true){
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = dec.decode(value, { stream:true });
+        if (!chunk) continue;
+        if (!mitraEl){ typing.remove(); mitraEl = bubble("mitra", ""); }
+        acc += chunk;
+        mitraEl.textContent = acc;
+        scroll();
+      }
+    } catch(e){
+      typing.remove();
+      if (!mitraEl) mitraEl = bubble("mitra", "");
+      acc = acc || "I'm having a little trouble reaching my words right now — but I'm still here. Try me again in a sec?";
+      mitraEl.textContent = acc;
+    } finally {
+      if (typing.parentNode) typing.remove();
+      if (acc){ messages.push({ role:"mitra", content:acc }); save(); }
+      busy = false; send.disabled = false;
+      glow.classList.remove("thinking");
+      scroll();
+    }
+  }
+
+  function autosize(){ box.style.height = "auto"; box.style.height = Math.min(box.scrollHeight, 130) + "px"; }
+  box.addEventListener("input", autosize);
+  box.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+  });
+  send.addEventListener("click", sendMessage);
+
+  (function initVoice(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR){ mic.hidden = true; return; }
+    mic.hidden = false;
+
+    const IDLE_PLACEHOLDER = box.placeholder;
+    let recognizing = false;
+    let heardSomething = false;
+    let baseText = "";
+    const recog = new SR();
+    recog.lang = "en-IN";
+    recog.continuous = false;
+    recog.interimResults = true;
+
+    function setRecording(on){
+      recognizing = on;
+      mic.classList.toggle("recording", on);
+      box.placeholder = on ? "listening… speak now" : IDLE_PLACEHOLDER;
+    }
+
+    mic.addEventListener("click", () => {
+      if (recognizing){ recog.stop(); return; }
+      baseText = box.value.trim();
+      heardSomething = false;
+      try { recog.start(); setRecording(true); }
+      catch(e){ setRecording(false); }
+    });
+
+    recog.addEventListener("result", (e) => {
+      let finalT = "", interimT = "";
+      for (let i = 0; i < e.results.length; i++){
+        const r = e.results[i];
+        if (r.isFinal) finalT += r[0].transcript;
+        else interimT += r[0].transcript;
+      }
+      const sep = baseText ? " " : "";
+      box.value = (baseText + sep + (finalT + " " + interimT).trim()).trim();
+      if (finalT.trim()) heardSomething = true;
+      autosize();
+    });
+
+    recog.addEventListener("end", () => {
+      setRecording(false);
+      if (heardSomething && box.value.trim()){
+        heardSomething = false;
+        const uses = parseInt(localStorage.getItem("mitra_voice_uses") || "0", 10) + 1;
+        localStorage.setItem("mitra_voice_uses", String(uses));
+        ev("voice_used", { uses, firstUse: uses === 1 });
+        sendMessage();
+      }
+    });
+
+    recog.addEventListener("error", () => { heardSomething = false; setRecording(false); });
+  })();
+
+  const sheet = document.getElementById("sheet"), sheetBg = document.getElementById("sheet-bg");
+  function openSheet(o){ sheet.classList.toggle("open", o); sheetBg.classList.toggle("open", o); }
+  document.getElementById("info").addEventListener("click", () => openSheet(true));
+  document.getElementById("sheet-close").addEventListener("click", () => openSheet(false));
+  sheetBg.addEventListener("click", () => openSheet(false));
+
+  const chatsheet = document.getElementById("chatsheet"), chatsheetBg = document.getElementById("chatsheet-bg");
+  function openChats(o){
+    chatsheet.classList.toggle("open", o); chatsheetBg.classList.toggle("open", o);
+    if (o) renderChatList();
+  }
+  function closeChats(){ openChats(false); }
+  document.getElementById("chatlist-btn").addEventListener("click", () => openChats(true));
+  document.getElementById("chatsheet-close").addEventListener("click", () => openChats(false));
+  chatsheetBg.addEventListener("click", () => openChats(false));
+  document.getElementById("newchat-btn").addEventListener("click", newChat);
+  document.getElementById("incognito-btn").addEventListener("click", newIncognitoChat);
+
+  const authscreen  = document.getElementById("authscreen");
+  const appEl       = document.getElementById("app");
+  const authEmail   = document.getElementById("auth-email");
+  const authPassword= document.getElementById("auth-password");
+  const authSubmit  = document.getElementById("auth-submit");
+  const authToggle  = document.getElementById("auth-toggle");
+  const authForgot  = document.getElementById("auth-forgot");
+  const authError   = document.getElementById("auth-error");
+  let authMode = "login";
+
+  function showAuthError(msg){ authError.textContent = msg; authError.hidden = false; }
+  function clearAuthError(){ authError.hidden = true; authError.textContent = ""; }
+
+  authToggle.addEventListener("click", () => {
+    authMode = authMode === "login" ? "signup" : "login";
+    authSubmit.textContent = authMode === "login" ? "log in" : "create account";
+    authToggle.textContent = authMode === "login" ? "new here? sign up" : "already have an account? log in";
+    clearAuthError();
+  });
+
+  authSubmit.addEventListener("click", async () => {
+    clearAuthError();
+    const email = authEmail.value.trim(), password = authPassword.value;
+    if (!email || !password){ showAuthError("Enter both email and password."); return; }
+    authSubmit.disabled = true;
+    const fn = authMode === "login" ? window.__mitraLogIn : window.__mitraSignUp;
+    const res = fn ? await fn(email, password) : { ok:false, error:"Sign-in isn't configured yet." };
+    authSubmit.disabled = false;
+    if (!res.ok) showAuthError(res.error);
+  });
+  authPassword.addEventListener("keydown", (e) => { if (e.key === "Enter") authSubmit.click(); });
+
+  authForgot.addEventListener("click", async () => {
+    clearAuthError();
+    const email = authEmail.value.trim();
+    if (!email){ showAuthError("Enter your email above first, then tap this again."); return; }
+    const res = window.__mitraResetPassword ? await window.__mitraResetPassword(email) : { ok:false, error:"Not configured yet." };
+    showAuthError(res.ok ? "Password reset email sent — check your inbox." : res.error);
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", async () => {
+    openSheet(false);
+    if (window.__mitraLogOut) await window.__mitraLogOut();
+  });
+
+  document.getElementById("wipe-btn").addEventListener("click", async () => {
+    if (!confirm("Delete ALL your chats forever? This can't be undone.")) return;
+    const ids = Object.keys(chats);
+    for (const cid of ids){
+      if (window.__mitraDeleteChat && currentUid) await window.__mitraDeleteChat(currentUid, cid);
+    }
+    chats = {};
+    newChat();
+    openSheet(false);
+    ev("wipe_all");
+  });
+
+  addEventListener("keydown", (e) => {
+    if (e.key === "Escape"){ openSheet(false); openChats(false); openFeedback(false); }
+  });
+
+  const feedbacksheet = document.getElementById("feedbacksheet"), feedbacksheetBg = document.getElementById("feedbacksheet-bg");
+  const feedbackText = document.getElementById("feedback-text");
+  const feedbackSend = document.getElementById("feedback-send");
+  const feedbackStatus = document.getElementById("feedback-status");
+
+  function openFeedback(o){
+    feedbacksheet.classList.toggle("open", o); feedbacksheetBg.classList.toggle("open", o);
+    if (o){ feedbackStatus.hidden = true; feedbackText.value = ""; feedbackText.focus(); }
+  }
+  document.getElementById("feedback-open").addEventListener("click", () => { openSheet(false); openFeedback(true); });
+  document.getElementById("feedbacksheet-close").addEventListener("click", () => openFeedback(false));
+  feedbacksheetBg.addEventListener("click", () => openFeedback(false));
+
+  feedbackSend.addEventListener("click", async () => {
+    const text = feedbackText.value.trim();
+    if (!text){ feedbackText.focus(); return; }
+    feedbackSend.disabled = true;
+    const res = window.__mitraSendFeedback ? await window.__mitraSendFeedback(currentUid, text) : { ok:false };
+    feedbackSend.disabled = false;
+    feedbackStatus.hidden = false;
+    if (res.ok){
+      feedbackStatus.textContent = "Got it — thank you 💛";
+      feedbackText.value = "";
+      setTimeout(() => openFeedback(false), 1400);
+    } else {
+      feedbackStatus.textContent = "Couldn't send that just now — try again?";
+    }
+  });
+
+  let initializedFor = null;
+  async function onSignedIn(user){
+    authscreen.hidden = true;
+    appEl.hidden = false;
+    if (initializedFor === user.uid) return;
+    initializedFor = user.uid;
+    currentUid = user.uid;
+
+    try {
+      const idToken = window.__mitraGetIdToken ? await window.__mitraGetIdToken() : null;
+      sessionKey = idToken ? await fetchSessionKey(API_BASE, idToken) : null;
+    } catch(e){ console.error("Mitra: could not obtain session key", e); sessionKey = null; }
+
+    chats = (window.__mitraLoadChats ? await window.__mitraLoadChats(currentUid) : {}) || {};
+    for (const cid in chats){
+      chats[cid].messages = await decryptMessages(chats[cid].messages || []);
+    }
+    activeId = mostRecentId();
+    if (!activeId){
+      const c = makeChat([{ role:"mitra", content: greetingLine() }]);
+      activeId = c.id;
+      messages = chats[activeId].messages;
+      await persistActive();
+    } else {
+      messages = chats[activeId].messages;
+    }
+    boot();
+    ev("session");
+  }
+  function onSignedOut(){
+    initializedFor = null;
+    currentUid = null; sessionKey = null; chats = {}; activeId = null; messages = [];
+    document.body.classList.remove("incognito-mode");
+    openSheet(false); openChats(false); openFeedback(false);
+    appEl.hidden = true;
+    authscreen.hidden = false;
+    authEmail.value = ""; authPassword.value = ""; clearAuthError();
+  }
+
+  function initAuthFlow(){
+    if (window.__mitraOnAuthChange){
+      window.__mitraOnAuthChange((user) => { if (user) onSignedIn(user); else onSignedOut(); });
+    } else {
+      showAuthError("Sign-in isn't configured yet.");
+    }
+  }
+  if (document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", initAuthFlow);
+  } else {
+    initAuthFlow();
+  }
+
+  if ("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+})();
+</script>
+</body>
+</html>
