@@ -8,22 +8,22 @@ export function useRobotSection({ id, config }) {
 
   useEffect(() => {
     if (!triggerRef.current) return;
-    
+
     const applyTarget = () => {
       let finalConfig = { ...config };
-      
+
       // Smart Layout & Mobile Fallback
       // Calculate viewport and adjust if on mobile/tablet to avoid collision
       const isMobile = window.innerWidth < 768;
       const isTablet = window.innerWidth < 1024 && !isMobile;
-      
+
       if (isMobile) {
         if (config.mobileConfig) {
           finalConfig = { ...finalConfig, ...config.mobileConfig };
         } else {
           // Mobile Fallback: Shrink robot and move it to a safe top/bottom decorative zone
-          finalConfig.scale = (config.scale || 1) * 0.5; // Half size
-          
+          finalConfig.scale = (config.scale || 1) * 0.75; // 75% size instead of 50%
+
           // Force x to be closer to center or edge without overlapping
           if (finalConfig.position) {
             const x = finalConfig.position[0];
@@ -34,20 +34,23 @@ export function useRobotSection({ id, config }) {
       } else if (isTablet) {
         finalConfig.scale = (config.scale || 1) * 0.8;
       }
-      
+
       globalRobotController.setTarget(finalConfig, id);
     };
 
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: triggerRef.current,
-        start: 'top 60%',
-        end: 'bottom 40%',
-        onEnter: applyTarget,
-        onEnterBack: applyTarget,
+        start: 'top 50%',
+        end: 'bottom 50%',
+        onToggle: (self) => {
+          if (self.isActive) {
+            applyTarget();
+          }
+        },
       });
     });
-    
+
     // Recalculate on resize
     window.addEventListener('resize', applyTarget);
 

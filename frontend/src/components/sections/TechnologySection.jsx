@@ -17,7 +17,9 @@ export default function TechnologySection() {
   const robotRef = useRobotSection({
     id: 'technology',
     config: {
-      scale: 0 // Hide robot during this text-heavy section to avoid overlap
+      position: [4.0, 0, -2], // Right side, slightly back
+      rotation: [0, -0.3, 0],
+      scale: 1.0 
     }
   });
 

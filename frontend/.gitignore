@@ -27,3 +27,12 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Custom agent/skill files
+.agents
+skills-lock.json
+
+# Strix / testing files
+.strix
+strix-results
+strix.log

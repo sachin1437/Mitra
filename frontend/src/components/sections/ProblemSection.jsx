@@ -17,17 +17,23 @@ const RevealText = ({ text, className = "" }) => {
 
 export default function ProblemSection() {
   const containerRef = useRef(null)
-  
+
   const robotRef = useRobotSection({
     id: 'problem',
     config: {
-      scale: 0 // Hide robot during this text-heavy section to avoid overlap
+      position: [5.0, 0, -1], // Far right side, away from the text
+      rotation: [0, -0.3, 0], // Looking slightly left towards the text
+      scale: 1.2, // Keep it visible and reasonably sized
+      mobileConfig: {
+        position: [0, 2.5, -2], // Top center on mobile
+        scale: 0.9
+      }
     }
   });
-  
+
   useEffect(() => {
     if (!containerRef.current) return;
-    
+
     const ctx = gsap.context(() => {
       // 1. Top label and headline static reveal
       const tl = gsap.timeline({
@@ -44,21 +50,21 @@ export default function ProblemSection() {
         { opacity: 0, x: -20 },
         { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' }
       )
-      
-      // Headline line-by-line reveal with clip mask effect
-      .fromTo('.problem-headline-line',
-        { y: '100%', opacity: 0, rotationX: 15 },
-        { 
-          y: '0%', 
-          opacity: 1, 
-          rotationX: 0, 
-          duration: 0.8, 
-          stagger: 0.15, 
-          ease: 'power3.out',
-          transformOrigin: '0% 50% -50'
-        },
-        "-=0.4"
-      );
+
+        // Headline line-by-line reveal with clip mask effect
+        .fromTo('.problem-headline-line',
+          { y: '100%', opacity: 0, rotationX: 15 },
+          {
+            y: '0%',
+            opacity: 1,
+            rotationX: 0,
+            duration: 0.8,
+            stagger: 0.15,
+            ease: 'power3.out',
+            transformOrigin: '0% 50% -50'
+          },
+          "-=0.4"
+        );
 
       // 2. Professional "scrubbed" text reveal on scroll for paragraphs
       gsap.to('.reveal-word', {
@@ -71,22 +77,22 @@ export default function ProblemSection() {
           scrub: 1, // Smooth dampening 
         }
       });
-      
+
     }, containerRef)
 
     return () => ctx.revert()
   }, [])
 
   return (
-    <section 
+    <section
       ref={(el) => {
         containerRef.current = el;
         if (robotRef) robotRef.current = el;
-      }} 
+      }}
       className="relative w-full py-32 md:py-48 bg-bg-primary border-t border-border overflow-hidden"
     >
       <div className="max-w-5xl mx-auto px-6 md:px-12 flex flex-col items-start text-left">
-        
+
         {/* Label */}
         <div className="problem-label flex items-center gap-4 mb-12">
           <div className="w-8 h-[1px] bg-amber-600 dark:bg-[#E8BA35] opacity-80" />

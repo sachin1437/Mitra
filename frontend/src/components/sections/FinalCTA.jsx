@@ -4,7 +4,7 @@ import { useRobotSection } from '@/hooks/useRobotSection'
 
 export default function FinalCTA() {
   const containerRef = useRef(null)
-  
+
   const robotRef = useRobotSection({
     id: 'final-cta',
     config: {
@@ -32,11 +32,11 @@ export default function FinalCTA() {
   }, [])
 
   return (
-    <section 
+    <section
       ref={(el) => {
         containerRef.current = el;
         robotRef.current = el;
-      }} 
+      }}
       className="relative w-full h-screen min-h-[700px] flex items-center justify-center bg-bg-primary overflow-hidden"
     >
       <div className="absolute inset-0 z-1 bg-bg-primary/60" />

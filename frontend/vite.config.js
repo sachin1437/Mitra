@@ -14,8 +14,21 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        chat: resolve(__dirname, 'src/chat/app.html')
+        main: resolve(import.meta.dirname, 'index.html'),
+        chat: resolve(import.meta.dirname, 'src/chat/app.html')
+      },
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/three') || id.includes('@react-three')) {
+            return 'three';
+          }
+          if (id.includes('node_modules/framer-motion') || id.includes('node_modules/gsap')) {
+            return 'animation';
+          }
+          if (id.includes('node_modules/react')) {
+            return 'react';
+          }
+        }
       }
     }
   }

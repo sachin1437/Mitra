@@ -9,8 +9,8 @@ export default function HeroContent() {
   useEffect(() => {
     // Reveal animation
     const ctx = gsap.context(() => {
-      // 1.5s delay to allow preloader to finish its animation
-      const tl = gsap.timeline({ delay: 1.5 })
+      // 3.0s delay to allow new premium preloader to finish its animation
+      const tl = gsap.timeline({ delay: 3.0 })
 
       tl.fromTo('.hero-text-line',
         { y: 60, opacity: 0, rotationX: 25 },
