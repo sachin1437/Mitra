@@ -131,42 +131,25 @@ export default function RobotScene({ onFail }) {
     const t = state.clock.getElapsedTime();
     group.current.position.y = Math.sin(t / 1.5) / 10;
 
-    // 3. Fast Face/Head Tracking ONLY in Hero Section
-    if (globalRobotController.activeSectionId === 'hero') {
-      const mouseX = globalRobotController.mouseTarget.x;
-      const mouseY = globalRobotController.mouseTarget.y;
+    // 3. Fast Face/Head Tracking in ALL Sections
+    const mouseX = globalRobotController.mouseTarget.x;
+    const mouseY = globalRobotController.mouseTarget.y;
 
-      const targetLookX = (mouseX * Math.PI) / 4; // Wide range
-      const targetLookY = (mouseY * Math.PI) / 6;
+    const targetLookX = (mouseX * Math.PI) / 4; // Wide range
+    const targetLookY = (mouseY * Math.PI) / 6;
 
-      // If we found a specific head bone/mesh, rotate that incredibly fast
-      if (headBone) {
-        headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, targetLookX, 0.2); // 0.2 is very fast and snappy
-        headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -targetLookY, 0.2);
+    // If we found a specific head bone/mesh, rotate that incredibly fast
+    if (headBone) {
+      headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, targetLookX, 0.2); // 0.2 is very fast and snappy
+      headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, -targetLookY, 0.2);
 
-        // Ensure body remains still (reset subtle movements)
-        group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, 0, 0.1);
-        group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, 0, 0.1);
-      } else {
-        // Fallback: rotate whole body fast if no head found
-        group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, targetLookX, 0.2);
-        group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, -targetLookY, 0.2);
-      }
+      // Ensure body remains still (reset subtle movements)
+      group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, 0, 0.1);
+      group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, 0, 0.1);
     } else {
-      // Not in hero: gracefully return head to center
-      if (headBone) {
-        headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, 0, 0.1);
-        headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, 0, 0.1);
-      }
-
-      // Subtle body movement for other sections based on mouse
-      const mouseX = globalRobotController.mouseTarget.x;
-      const mouseY = globalRobotController.mouseTarget.y;
-      const targetLookX = (mouseX * Math.PI) / 25;
-      const targetLookY = (mouseY * Math.PI) / 25;
-
-      group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, targetLookX, 0.05);
-      group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, -targetLookY, 0.05);
+      // Fallback: rotate whole body fast if no head found
+      group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, targetLookX, 0.2);
+      group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, -targetLookY, 0.2);
     }
   });
 

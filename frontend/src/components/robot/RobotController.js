@@ -3,9 +3,17 @@ import * as THREE from 'three';
 class RobotController {
   constructor() {
     // Initialize with Hero configuration so it doesn't flash in the middle of the screen
-    this.targetPosition = new THREE.Vector3(6.0, 1, 0);
-    this.targetRotation = new THREE.Vector3(0.1, -0.2, 0);
-    this.targetScale = 1.25; // Corrected to 1.25 to account for base scale 1.2
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+    
+    if (isMobile) {
+      this.targetPosition = new THREE.Vector3(0, 1.8, 0);
+      this.targetRotation = new THREE.Vector3(0, 0, 0);
+      this.targetScale = 1.2;
+    } else {
+      this.targetPosition = new THREE.Vector3(6.0, 1, 0);
+      this.targetRotation = new THREE.Vector3(0.1, -0.2, 0);
+      this.targetScale = 2.0; 
+    }
     
     this.mouseTarget = new THREE.Vector2(0, 0);
     this.scrollVelocity = 0;

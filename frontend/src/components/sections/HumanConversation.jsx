@@ -8,7 +8,7 @@ export default function HumanConversation() {
   const robotRef = useRobotSection({
     id: 'human-conversation',
     config: {
-      position: [4.5, 0, 0], // Far right
+      position: [8.5, 0, 0], // Moved far right so it doesn't cover text
       rotation: [0, -0.2, 0], // Looking slightly left
       scale: 1.2
     }
@@ -21,19 +21,19 @@ export default function HumanConversation() {
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: '.hc-compare',
-          start: 'top 70%',
-          end: 'bottom 40%',
-          scrub: true,
+          start: 'top 80%',
+          end: 'bottom -20%', // Extended distance for extremely smooth scroll
+          scrub: 1.5, // Extra smoothing
         }
       })
 
       tl.fromTo('.hc-traditional',
-        { opacity: 0.5, filter: 'blur(0px)', scale: 1 },
-        { opacity: 0.1, filter: 'blur(4px)', scale: 0.95 }
+        { opacity: 1, filter: 'none', scale: 1 },
+        { opacity: 0.2, filter: 'none', scale: 0.95 }
       )
         .fromTo('.hc-mitra',
-          { opacity: 0.1, filter: 'blur(10px)', y: 50 },
-          { opacity: 1, filter: 'blur(0px)', y: 0 },
+          { opacity: 0, filter: 'none', y: 30 },
+          { opacity: 1, filter: 'none', y: 0 },
           "<"
         )
 
@@ -42,11 +42,11 @@ export default function HumanConversation() {
   }, [])
 
   return (
-    <section 
+    <section
       ref={(el) => {
         containerRef.current = el;
         robotRef.current = el;
-      }} 
+      }}
       className="py-24 md:py-40 bg-[var(--color-bg-secondary)] border-t border-[var(--color-border)]"
     >
       <div className="max-w-5xl mx-auto px-6 md:px-12 text-center">
@@ -59,7 +59,7 @@ export default function HumanConversation() {
         <div className="hc-compare flex flex-col items-center justify-center gap-10 md:gap-12 relative">
 
           {/* Traditional Assistant */}
-          <div className="hc-traditional flex flex-col items-center opacity-50">
+          <div className="hc-traditional flex flex-col items-center opacity-100">
             <div className="text-xs tracking-[0.2em] uppercase text-[var(--color-text-secondary)] mb-4">Traditional Assistant</div>
             <div className="px-8 py-4 border border-[var(--color-border)] rounded-full text-lg">
               "How can I help you today?"

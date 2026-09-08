@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import LazySection from '@/lib/performance/LazySection'
 import Hero from '@/components/hero/Hero'
 
@@ -15,6 +15,29 @@ const TechnologySection = React.lazy(() => import('@/components/sections/Technol
 const FinalCTA = React.lazy(() => import('@/components/sections/FinalCTA'))
 
 export default function Home() {
+  useEffect(() => {
+    // Prevent browser from automatically restoring scroll position on refresh
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // Force scroll to top before the page unloads
+    window.onbeforeunload = function () {
+      window.scrollTo(0, 0);
+    };
+
+    // Ensure we scroll to top after layout and GSAP triggers have initialized
+    window.scrollTo(0, 0);
+    const timer = setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 100);
+
+    return () => {
+      window.onbeforeunload = null;
+      clearTimeout(timer);
+    };
+  }, []);
+
   return (
     <main className="w-full grow z-10 relative">
       <Hero />

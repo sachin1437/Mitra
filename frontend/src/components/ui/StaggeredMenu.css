@@ -166,7 +166,7 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: clamp(260px, 38vw, 420px);
+  width: clamp(280px, 40vw, 500px);
   height: 100%;
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
@@ -197,7 +197,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: clamp(260px, 38vw, 420px);
+  width: clamp(280px, 40vw, 500px);
   pointer-events: none;
   z-index: 5;
   opacity: 0;
@@ -314,9 +314,9 @@
   position: relative;
   color: var(--color-text-primary);
   font-weight: 600;
-  font-size: 3.5rem;
+  font-size: clamp(2.2rem, 10vw, 3.5rem);
   cursor: pointer;
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: -2px;
   text-transform: uppercase;
   transition:

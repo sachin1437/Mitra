@@ -33,9 +33,9 @@ export default function FeaturesSection() {
   const robotRef = useRobotSection({
     id: 'features',
     config: {
-      position: [4.5, 2.5, -1], // Far Top right, away from title text
+      position: [5.5, 0, -1], // Far Top right, away from title text
       rotation: [0.1, -0.4, 0],
-      scale: 0.8
+      scale: 1.0
     }
   });
 

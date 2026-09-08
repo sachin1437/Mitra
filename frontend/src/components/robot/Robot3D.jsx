@@ -31,15 +31,27 @@ export default function Robot3D({ isDark = true }) {
               className="w-full h-full"
             >
               {/* Cinematic Lighting Rig */}
-              <ambientLight intensity={isDark ? 0.7 : 1.2} />
+              <ambientLight intensity={isDark ? 2.5 : 2.2} />
               <directionalLight 
                 position={[5, 8, 5]} 
-                intensity={isDark ? 2.5 : 1.8} 
+                intensity={isDark ? 4.0 : 3.5} 
                 color={isDark ? "#ffffff" : "#f1f5f9"} 
               />
+              {/* Front fill light to illuminate the face when looking down */}
+              <directionalLight 
+                position={[0, -3, 6]} 
+                intensity={isDark ? 3.0 : 2.5} 
+                color="#ffffff" 
+              />
+              {/* Top fill light for even coverage */}
+              <directionalLight 
+                position={[0, 6, 3]} 
+                intensity={isDark ? 2.0 : 1.8} 
+                color="#e0e8ff" 
+              />
               {/* Subtle Rim lights for 3D depth and cinematic quality */}
-              <pointLight position={[-5, 5, -5]} intensity={isDark ? 3.5 : 1.5} color="#5227FF" />
-              <pointLight position={[5, -5, -2]} intensity={isDark ? 2.5 : 1} color="#E8BA35" />
+              <pointLight position={[-5, 5, -5]} intensity={isDark ? 5.0 : 3.5} color="#5227FF" />
+              <pointLight position={[5, -5, -2]} intensity={isDark ? 4.0 : 3.0} color="#E8BA35" />
 
               <RobotScene containerRef={containerRef} onFail={() => setHasFailed(true)} />
             </Canvas>

@@ -8,9 +8,9 @@ export default function AboutSection() {
   const robotRef = useRobotSection({
     id: 'about',
     config: {
-      position: [4.5, 3.2, -1.5], // Top right, above the right column
+      position: [8.5, 0, -1.5], // Moved further right to avoid text
       rotation: [0.1, -0.2, 0], // Looking slightly down and left
-      scale: 0.8
+      scale: 1.0 // Fixed small size
     }
   });
 

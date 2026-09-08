@@ -30,20 +30,45 @@ export default function GlobalRobot3D() {
           <Canvas
             camera={{ position: [0, 0, 15], fov: 40 }}
             dpr={1}
-            // preserveDrawingBuffer is crucial to prevent the canvas from clearing/flashing during View Transitions
-            gl={{ antialias: false, alpha: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }}
+            // preserveDrawingBuffer causes VRAM exhaustion on mobile during view transitions, leading to WebGL context loss (robot disappears).
+            // We only enable it on desktop where VRAM is plentiful.
+            gl={{ antialias: false, alpha: true, powerPreference: 'high-performance', preserveDrawingBuffer: typeof window !== 'undefined' && window.innerWidth > 768 }}
             className="w-full h-full !pointer-events-none"
           >
-            {/* Cinematic Lighting Rig */}
-            <ambientLight intensity={isDark ? 0.7 : 1.2} />
+            {/* Comprehensive Lighting Rig */}
+            <ambientLight intensity={isDark ? 1.5 : 2.0} />
+            
+            {/* Main Key Light */}
             <directionalLight 
-              position={[5, 8, 5]} 
-              intensity={isDark ? 2.5 : 1.8} 
+              position={[5, 8, 10]} 
+              intensity={isDark ? 3.0 : 2.5} 
               color={isDark ? "#ffffff" : "#f1f5f9"} 
             />
+            
+            {/* Left Fill Light */}
+            <directionalLight 
+              position={[-10, 2, 5]} 
+              intensity={isDark ? 2.0 : 1.5} 
+              color="#ffffff" 
+            />
+            
+            {/* Right Fill Light */}
+            <directionalLight 
+              position={[10, 2, 5]} 
+              intensity={isDark ? 2.0 : 1.5} 
+              color="#ffffff" 
+            />
+
+            {/* Bottom Fill Light (so underside isn't pure black) */}
+            <directionalLight 
+              position={[0, -10, 5]} 
+              intensity={isDark ? 1.5 : 1.0} 
+              color="#ffffff" 
+            />
+
             {/* Subtle Rim lights for 3D depth and cinematic quality */}
-            <pointLight position={[-5, 5, -5]} intensity={isDark ? 3.5 : 1.5} color="#5227FF" />
-            <pointLight position={[5, -5, -2]} intensity={isDark ? 2.5 : 1} color="#E8BA35" />
+            <pointLight position={[-5, 5, -5]} intensity={isDark ? 4.0 : 2.5} color="#5227FF" />
+            <pointLight position={[5, -5, -2]} intensity={isDark ? 3.0 : 2.0} color="#E8BA35" />
 
             <RobotScene />
           </Canvas>

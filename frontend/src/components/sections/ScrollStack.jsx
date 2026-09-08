@@ -1,6 +1,7 @@
 import { forwardRef, useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
 import ScrollTrigger from 'gsap/ScrollTrigger'
+import { useRobotSection } from '@/hooks/useRobotSection'
 import './ScrollStack.css'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -42,6 +43,14 @@ const slides = [
 const ScrollStack = ({ className = '' }) => {
   const sectionRef = useRef(null)
   const cardRefs = useRef([])
+  const robotRef = useRobotSection({
+    id: 'scroll-stack',
+    config: {
+      position: [0, -3.0, -3], // Bottom center, to match scroll-down behavior
+      rotation: [0, 0, 0],
+      scale: 1.0
+    }
+  });
 
   useLayoutEffect(() => {
     const scope = sectionRef.current
@@ -151,7 +160,13 @@ const ScrollStack = ({ className = '' }) => {
   }, [])
 
   return (
-    <section ref={sectionRef} className={`scroll-stack-section ${className}`.trim()}>
+    <section 
+      ref={(el) => {
+        sectionRef.current = el;
+        robotRef.current = el;
+      }} 
+      className={`scroll-stack-section ${className}`.trim()}
+    >
       <div className="scroll-stack-wrap mx-auto px-4 sm:px-6 md:px-10" style={{ maxWidth: '1200px' }}>
         <div className="scroll-stack-track">
           {slides.map((slide, index) => (

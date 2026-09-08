@@ -29,6 +29,14 @@ export default function Footer() {
       
       <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-[var(--color-border)] flex flex-col md:flex-row justify-between items-center text-xs text-[var(--color-text-secondary)]">
         <p>&copy; {new Date().getFullYear()} Mitra AI. All rights reserved.</p>
+        
+        <button 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="mt-4 md:mt-0 px-6 py-2 rounded-full border border-[var(--color-border)] hover:bg-[var(--color-text-primary)] hover:text-[var(--color-bg-primary)] transition-colors duration-300"
+        >
+          Back to top
+        </button>
+
         <div className="flex gap-4 mt-4 md:mt-0">
           <a href="#" className="hover:text-[var(--color-text-primary)]">X (Twitter)</a>
           <a href="#" className="hover:text-[var(--color-text-primary)]">LinkedIn</a>
