@@ -160,11 +160,11 @@ const ScrollStack = ({ className = '' }) => {
   }, [])
 
   return (
-    <section 
+    <section
       ref={(el) => {
         sectionRef.current = el;
         robotRef.current = el;
-      }} 
+      }}
       className={`scroll-stack-section ${className}`.trim()}
     >
       <div className="scroll-stack-wrap mx-auto px-4 sm:px-6 md:px-10" style={{ maxWidth: '1200px' }}>

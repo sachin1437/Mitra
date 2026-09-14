@@ -13,13 +13,13 @@ const architecture = [
 
 export default function TechnologySection() {
   const containerRef = useRef(null)
-  
+
   const robotRef = useRobotSection({
     id: 'technology',
     config: {
       position: [4.0, 0, -2], // Right side, slightly back
       rotation: [0, -0.3, 0],
-      scale: 1.0 
+      scale: 1.0
     }
   });
 
@@ -57,12 +57,12 @@ export default function TechnologySection() {
   }, [])
 
   return (
-    <section 
+    <section
       ref={(el) => {
         containerRef.current = el;
         if (robotRef) robotRef.current = el;
-      }} 
-      id="technology" 
+      }}
+      id="technology"
       className="py-24 md:py-40 bg-[var(--color-bg-secondary)] border-t border-[var(--color-border)]"
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex flex-col items-center">

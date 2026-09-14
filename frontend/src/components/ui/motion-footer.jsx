@@ -185,7 +185,7 @@ const MagneticButton = React.forwardRef(
       }, element);
 
       return () => ctx.revert();
-    },[]);
+    }, []);
 
     return (
       <Component
@@ -267,7 +267,7 @@ export function CinematicFooter() {
     }, wrapperRef);
 
     return () => ctx.revert();
-  },[]);
+  }, []);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -276,7 +276,7 @@ export function CinematicFooter() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
-      
+
       {/* 
         The "Curtain Reveal" Wrapper:
         It sits in standard flow. Because it has clip-path, its contents
@@ -289,7 +289,7 @@ export function CinematicFooter() {
       >
         {/* The actual footer stays fixed to the viewport underneath everything */}
         <footer className="fixed bottom-0 left-0 flex h-[80vh] w-full flex-col justify-between overflow-hidden bg-bg-primary text-text-primary cinematic-footer-wrapper">
-          
+
           {/* Ambient Light & Grid Background */}
           <div className="footer-aurora absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0" />
           <div className="footer-bg-grid absolute inset-0 z-0 pointer-events-none" />
@@ -323,10 +323,10 @@ export function CinematicFooter() {
             <div ref={linksRef} className="flex flex-col items-center gap-6 w-full">
               {/* App Store Links (Primary) */}
               <div className="flex flex-wrap justify-center gap-4 w-full">
-                <MagneticButton as="a" href="/src/chat/app.html#login" className="footer-glass-pill px-10 py-5 rounded-full text-text-primary font-bold text-sm md:text-base flex items-center gap-3 group">
-                  Start Conversation
+                <MagneticButton as="a" href="/Mitra-v1.0.2beta.apk" download className="footer-glass-pill px-10 py-5 rounded-full text-text-primary font-bold text-sm md:text-base flex items-center gap-3 group">
+                  Download APK
                 </MagneticButton>
-                
+
                 <MagneticButton as="a" href="#" className="footer-glass-pill px-10 py-5 rounded-full text-text-primary font-bold text-sm md:text-base flex items-center gap-3 group">
                   Contact us
                 </MagneticButton>
@@ -346,7 +346,7 @@ export function CinematicFooter() {
 
           {/* 3. Bottom Bar / Credits */}
           <div className="relative z-20 w-full pb-8 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-6">
-            
+
             {/* Copyright */}
             <div className="text-text-secondary text-[10px] md:text-xs font-semibold tracking-widest uppercase order-2 md:order-1">
               © 2026 Mitra AI. All rights reserved.

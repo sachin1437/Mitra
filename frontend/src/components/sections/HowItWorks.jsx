@@ -31,7 +31,7 @@ export default function HowItWorks() {
   const robotRef = useRobotSection({
     id: 'main',
     config: {
-      position: [-8.5, -2.5, 0], // Moved more left as requested
+      position: [-7.1, -1.5, 0], // Moved more right for production
       rotation: [0, 0.2, 0], // Looking slightly right
       scale: 1.0,
       mobileConfig: {

@@ -12,7 +12,11 @@ export function useRobotSection({ id, config }) {
     if (!triggerRef.current) return;
     const currentConfig = JSON.parse(configString);
 
-    const applyTarget = () => {
+    const applyTarget = (isForce = false) => {
+      // If triggered by a resize (not forced), only apply if this is the currently active section.
+      // This prevents inactive sections from overwriting the robot config during window resizes!
+      if (!isForce && globalRobotController.activeSectionId !== id && globalRobotController.activeSectionId !== undefined) return;
+
       let finalConfig = { ...currentConfig };
 
 
@@ -47,7 +51,7 @@ export function useRobotSection({ id, config }) {
         end: 'bottom 50%',
         onToggle: (self) => {
           if (self.isActive) {
-            applyTarget();
+            applyTarget(true); // Force apply on scroll
           }
         },
       });
@@ -55,15 +59,17 @@ export function useRobotSection({ id, config }) {
 
     // If it's the hero section, apply immediately on mount so it doesn't spawn offscreen
     if (id === 'hero') {
-      applyTarget();
+      applyTarget(true); // Force apply on mount
     }
 
+    const handleResize = () => applyTarget(false);
+
     // Recalculate on resize
-    window.addEventListener('resize', applyTarget);
+    window.addEventListener('resize', handleResize);
 
     return () => {
       ctx.revert();
-      window.removeEventListener('resize', applyTarget);
+      window.removeEventListener('resize', handleResize);
     };
   }, [id, configString]);
 
